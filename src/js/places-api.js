@@ -5,7 +5,23 @@ import { getRadius } from './preferences.js';
 // Named MAPSKEY (not VITE_-prefixed) — see envPrefix in vite.config.js.
 const GOOGLE_API_KEY = import.meta.env.MAPSKEY;
 
-const PLACES_INCLUDED_TYPES = ['restaurant', 'cafe', 'bakery', 'fast_food_restaurant', 'meal_takeaway'];
+// A specific cuisine (mala, hot pot, chinese, korean_barbecue, …) is a
+// *subtype* of 'restaurant' in Google's type system, and Nearby Search
+// matches those automatically — confirmed against 18 real mala/hot-pot/
+// buffet/BBQ places, every one already had 'restaurant' in its types array.
+// So this list only needs the ROOT categories, including the few that are
+// siblings of 'restaurant' rather than children of it and so wouldn't
+// otherwise match: bar, deli, food_court, meal_delivery, food_delivery.
+// One real gap this can't close: a small number of places on Google Maps
+// carry only the generic 'food' tag with no Table A subtype at all — that
+// tag can't be used in includedTypes (Table B), so no type list, however
+// broad, will surface them; the shop just needs its Google Maps listing
+// filled in. Most "missing" places are the 20-result-per-search cap, not
+// type filtering — see fetchNearby()'s comment below.
+const PLACES_INCLUDED_TYPES = [
+  'restaurant', 'cafe', 'bakery', 'fast_food_restaurant', 'meal_takeaway',
+  'bar', 'deli', 'food_court', 'meal_delivery', 'food_delivery',
+];
 // Hotels get tagged with a generic 'restaurant' type too (for their in-house
 // dining), so without this a search near any hotel-dense area comes back
 // half full of hotels instead of standalone restaurants/chains — confirmed
