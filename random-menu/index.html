@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สุ่มเมนูอาหาร วันนี้กินอะไรดี? วงล้อสุ่มกว่า 100 เมนู | HEWKAO</title>
+<meta name="description" content="คิดไม่ออกว่าจะกินอะไร กดสุ่มเมนูอาหารได้ทันที ไม่ต้องใช้ตำแหน่ง เลือกได้ตามมื้อ แนวอาหาร และงบ ตั้งแต่ข้าวกะเพรา ก๋วยเตี๋ยว ส้มตำ หมูกระทะ ไปจนถึงของหวาน รวมกว่า 100 เมนู">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="/icons/favicon-96.png" sizes="96x96" type="image/png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/landing.css">
+<link rel="stylesheet" href="/random-menu.css">
+</head>
+<body>
+
+<main class="landing">
+  <header class="landing-top">
+    <a href="/" aria-label="HEWKAO หน้าแรก"><img src="/assets/logo-horizontal.png" alt="HEWKAO" class="landing-logo" width="76" height="28"></a>
+    <a class="landing-top-link" href="/">สุ่มร้านใกล้ฉัน</a>
+  </header>
+
+  <section class="menu-hero">
+    <p class="landing-eyebrow">ไม่ต้องใช้ตำแหน่ง</p>
+    <h1>สุ่มเมนูอาหาร<br><span>วันนี้กินอะไรดี?</span></h1>
+    <p class="landing-lede">เลือกมื้อ แนว และงบ แล้วกดสุ่ม ได้เมนูทันที ไม่ถูกใจก็สุ่มใหม่ได้เรื่อยๆ ไม่ได้เมนูเดิมซ้ำ พอได้เมนูแล้วกดหาร้านใกล้ตัวต่อได้เลย</p>
+  </section>
+
+  <section class="menu-tool" aria-label="วงล้อสุ่มเมนู">
+    <div class="menu-filters">
+      <div class="menu-filter">
+        <p class="prefs-label" id="mealLabel">มื้อไหน</p>
+        <div class="chips" data-filter="meal" role="group" aria-labelledby="mealLabel">
+          <button type="button" class="chip selected" data-value="" aria-pressed="true">ทุกมื้อ</button>
+          <button type="button" class="chip" data-value="breakfast" aria-pressed="false">มื้อเช้า</button>
+          <button type="button" class="chip" data-value="lunch" aria-pressed="false">มื้อกลางวัน</button>
+          <button type="button" class="chip" data-value="dinner" aria-pressed="false">มื้อเย็น</button>
+          <button type="button" class="chip" data-value="latenight" aria-pressed="false">ตอนดึก</button>
+        </div>
+      </div>
+      <div class="menu-filter">
+        <p class="prefs-label" id="typeLabel">อยากกินแนวไหน</p>
+        <div class="chips" data-filter="type" role="group" aria-labelledby="typeLabel">
+          <button type="button" class="chip selected" data-value="" aria-pressed="true">อะไรก็ได้</button>
+          <button type="button" class="chip" data-value="rice" aria-pressed="false">ข้าว</button>
+          <button type="button" class="chip" data-value="noodle" aria-pressed="false">เส้น</button>
+          <button type="button" class="chip" data-value="soup" aria-pressed="false">ต้ม · แกง</button>
+          <button type="button" class="chip" data-value="salad" aria-pressed="false">ยำ · ตำ · ลาบ</button>
+          <button type="button" class="chip" data-value="grill" aria-pressed="false">ปิ้งย่าง · ทอด</button>
+          <button type="button" class="chip" data-value="intl" aria-pressed="false">ต่างชาติ</button>
+          <button type="button" class="chip" data-value="dessert" aria-pressed="false">ของหวาน</button>
+        </div>
+      </div>
+      <div class="menu-filter">
+        <p class="prefs-label" id="priceLabel">งบต่อคน</p>
+        <div class="chips" data-filter="price" role="group" aria-labelledby="priceLabel">
+          <button type="button" class="chip selected" data-value="" aria-pressed="true">ทุกงบ</button>
+          <button type="button" class="chip" data-value="1" aria-pressed="false">ไม่เกิน 60 บาท</button>
+          <button type="button" class="chip" data-value="2" aria-pressed="false">60–150 บาท</button>
+          <button type="button" class="chip" data-value="3" aria-pressed="false">150 บาทขึ้นไป</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="menu-machine">
+      <div class="menu-window" aria-hidden="true">
+        <div class="menu-reel" id="menuReel"><span>กดสุ่มเลย</span></div>
+      </div>
+      <div class="menu-result" id="menuResult" aria-live="polite" hidden>
+        <p class="menu-quip" id="menuQuip"></p>
+        <h2 class="menu-dish" id="menuDish"></h2>
+        <p class="menu-blurb" id="menuBlurb"></p>
+        <div class="menu-actions">
+          <a id="menuFindBtn" class="btn btn-primary" href="https://www.google.com/maps" target="_blank" rel="noopener">หาร้านใกล้ฉันใน Google Maps</a>
+          <button id="menuShareBtn" type="button" class="btn btn-secondary">แชร์ให้เพื่อน</button>
+        </div>
+      </div>
+      <button id="menuSpinBtn" type="button" class="btn btn-primary landing-start-btn menu-spin-btn">สุ่มเมนู</button>
+      <p class="landing-cta-note" id="menuPoolNote">สุ่มจาก 102 เมนู</p>
+    </div>
+  </section>
+
+  <section class="landing-section" aria-labelledby="dishListTitle">
+    <h2 id="dishListTitle">เมนูทั้งหมดในวงล้อ</h2>
+    <p class="menu-list-lede">รวมเมนูที่คนไทยกินกันบ่อย ตั้งแต่ข้าวจานเดียว ก๋วยเตี๋ยว ต้มยำ ส้มตำ ปิ้งย่าง อาหารญี่ปุ่นเกาหลี ไปจนถึงของหวาน ราคาในตัวกรองเป็นราคาโดยประมาณต่อคนตามร้านทั่วไป</p>
+    <div id="dishList" class="menu-list">
+      <section>
+        <h3>ข้าวจานเดียว</h3>
+        <ul>
+          <li data-type="rice" data-meals="lunch dinner latenight" data-price="1"><b>ข้าวกะเพราหมูสับไข่ดาว</b><span>สั่งไม่ถูกเมื่อไหร่ก็สั่งอันนี้ ไข่ดาวต้องกรอบขอบ</span></li>
+          <li data-type="rice" data-meals="breakfast lunch" data-price="1"><b>ข้าวมันไก่</b><span>ไก่นุ่ม น้ำจิ้มเต้าเจี้ยว ซดน้ำซุปปิดท้าย</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="1"><b>ข้าวขาหมู</b><span>หนังหนึบ เนื้อเปื่อย ขอผักกาดดองเพิ่มได้</span></li>
+          <li data-type="rice" data-meals="breakfast lunch" data-price="1"><b>ข้าวหมูแดงหมูกรอบ</b><span>น้ำราดหวานๆ กับหมูกรอบเสียงดังกรุบ</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="2"><b>ข้าวผัดปู</b><span>ข้าวผัดหอมกระทะ เนื้อปูเต็มคำ บีบมะนาวนิดนึง</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="2"><b>ข้าวผัดอเมริกัน</b><span>ไส้กรอก ไก่ทอด ไข่ดาว ครบเหมือนเมนูในความทรงจำ</span></li>
+          <li data-type="rice" data-meals="breakfast lunch dinner latenight" data-price="1"><b>ข้าวไข่เจียวหมูสับ</b><span>เมนูกู้ชีพ ราดซอสพริกแล้วอิ่มได้ทุกเวลา</span></li>
+          <li data-type="rice" data-meals="lunch dinner latenight" data-price="1"><b>ข้าวหมูกระเทียม</b><span>หมูหอมกระเทียมเจียว ง่ายแต่ไม่เคยพลาด</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="1"><b>ข้าวคะน้าหมูกรอบ</b><span>ผักกรอบ หมูกรอบ ได้กินผักหน่อยให้รู้สึกผิดน้อยลง</span></li>
+          <li data-type="rice" data-meals="breakfast lunch" data-price="1"><b>ข้าวราดแกง</b><span>ชี้สองอย่างแล้วราดเยอะๆ ตัดสินใจง่ายกว่าเลือกร้าน</span></li>
+          <li data-type="rice" data-meals="breakfast latenight" data-price="1"><b>ข้าวต้มปลา</b><span>น้ำซุปใส ร้อนๆ สบายท้องทั้งตอนเช้าและตอนดึก</span></li>
+          <li data-type="rice" data-meals="breakfast latenight" data-price="1"><b>โจ๊กหมูใส่ไข่</b><span>ใส่ไข่ลวกหรือไข่เยี่ยวม้าก็ได้ อุ่นท้องก่อนเริ่มวัน</span></li>
+          <li data-type="rice" data-meals="breakfast" data-price="1"><b>ข้าวเหนียวหมูปิ้ง</b><span>อาหารเช้าคลาสสิก ซื้อข้างทางกินบนรถได้</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="1"><b>ข้าวหน้าเป็ด</b><span>เป็ดย่างหนังมัน ราดน้ำพะโล้เข้มข้น</span></li>
+          <li data-type="rice" data-meals="lunch" data-price="2"><b>ข้าวหมกไก่</b><span>ข้าวเหลืองหอมเครื่องเทศ กินกับน้ำจิ้มเขียวเปรี้ยวหวาน</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="1"><b>ข้าวผัดต้มยำ</b><span>เปรี้ยวเผ็ดแบบต้มยำ แต่อยู่ในรูปข้าวผัด</span></li>
+          <li data-type="rice" data-meals="lunch" data-price="1"><b>ข้าวคลุกกะปิ</b><span>จานเดียวได้หลายรส หวาน เค็ม เปรี้ยว ครบ</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="2"><b>ข้าวหน้าไก่เทอริยากิ</b><span>ซอสหวานเค็มแบบญี่ปุ่นกับไก่ย่างนุ่มๆ</span></li>
+          <li data-type="rice" data-meals="lunch dinner latenight" data-price="1"><b>ข้าวไก่ทอดกระเทียม</b><span>ไก่ทอดกรอบหอมกระเทียม เมนูฝากท้องยอดฮิต</span></li>
+          <li data-type="rice" data-meals="lunch dinner" data-price="1"><b>ข้าวผัดพริกแกงหมู</b><span>เผ็ดหอมพริกแกง ใบมะกรูดซอยช่วยเปิดทาง</span></li>
+          <li data-type="rice" data-meals="lunch" data-price="1"><b>ข้าวกล่องไก่ย่าง</b><span>สายคลีนก็ได้ สายหิวก็ดี</span></li>
+          <li data-type="rice" data-meals="dinner latenight" data-price="2"><b>ข้าวต้มกุ๊ย</b><span>ข้าวต้มขาวกับกับข้าวหลายอย่าง ขวัญใจคนนอนดึก</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>ก๋วยเตี๋ยวและเส้น</h3>
+        <ul>
+          <li data-type="noodle" data-meals="lunch" data-price="1"><b>ก๋วยเตี๋ยวเรือ</b><span>ชามเล็กน้ำเข้มข้น สั่งทีเดียวสามชามเป็นเรื่องปกติ</span></li>
+          <li data-type="noodle" data-meals="lunch dinner" data-price="1"><b>ก๋วยเตี๋ยวต้มยำ</b><span>เปรี้ยวเผ็ดถั่วป่น ปรุงเองได้ตามใจ</span></li>
+          <li data-type="noodle" data-meals="lunch dinner" data-price="1"><b>ผัดไทยกุ้งสด</b><span>เส้นเหนียวนุ่ม ห่อไข่หรือไม่ห่อก็อร่อย</span></li>
+          <li data-type="noodle" data-meals="lunch dinner" data-price="1"><b>ผัดซีอิ๊วหมู</b><span>กลิ่นกระทะไหม้นิดๆ คือหัวใจของจานนี้</span></li>
+          <li data-type="noodle" data-meals="lunch dinner" data-price="1"><b>ราดหน้าหมูหมัก</b><span>เส้นใหญ่เกรียมๆ กับน้ำราดข้นร้อน</span></li>
+          <li data-type="noodle" data-meals="breakfast lunch latenight" data-price="1"><b>บะหมี่เกี๊ยวหมูแดง</b><span>แห้งหรือน้ำก็ได้ เกี๊ยวกุ้งต้องมี</span></li>
+          <li data-type="noodle" data-meals="lunch dinner latenight" data-price="1"><b>ก๋วยจั๊บน้ำข้น</b><span>เส้นม้วนในน้ำพริกไทยร้อนๆ คู่หมูกรอบ</span></li>
+          <li data-type="noodle" data-meals="lunch" data-price="1"><b>เย็นตาโฟ</b><span>สีชมพูสดใส รสเปรี้ยวหวานไม่ซ้ำใคร</span></li>
+          <li data-type="noodle" data-meals="lunch" data-price="2"><b>ข้าวซอยไก่</b><span>แกงกะทิหอมเครื่องเทศ โรยเส้นกรอบ แบบฉบับเหนือ</span></li>
+          <li data-type="noodle" data-meals="breakfast lunch" data-price="1"><b>ขนมจีนน้ำยา</b><span>ผักเครื่องเคียงเต็มถาด ตักได้ไม่อั้น</span></li>
+          <li data-type="noodle" data-meals="lunch dinner" data-price="1"><b>สุกี้น้ำ</b><span>วุ้นเส้นผักเยอะ น้ำจิ้มสุกี้เปรี้ยวเผ็ด</span></li>
+          <li data-type="noodle" data-meals="latenight" data-price="1"><b>มาม่าผัดขี้เมา</b><span>จานรอบดึกที่เผ็ดพอจะตื่นอีกรอบ</span></li>
+          <li data-type="noodle" data-meals="lunch" data-price="1"><b>ก๋วยเตี๋ยวไก่มะระ</b><span>น้ำซุปหวานกลมกล่อม ขมนิดๆ แบบผู้ใหญ่</span></li>
+          <li data-type="noodle" data-meals="lunch dinner" data-price="2"><b>บะหมี่ต้มยำมันกุ้ง</b><span>น้ำข้นมันกุ้งเข้มๆ สายเผ็ดต้องลอง</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>ต้ม แกง</h3>
+        <ul>
+          <li data-type="soup" data-meals="lunch dinner" data-price="2"><b>ต้มยำกุ้งน้ำข้น</b><span>เปรี้ยวเผ็ดหอมข่าตะไคร้ ซดคู่ข้าวสวยร้อนๆ</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="1"><b>แกงเขียวหวานไก่</b><span>กะทิหอม เผ็ดหวานกำลังดี กินกับขนมจีนก็ได้</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="1"><b>ต้มข่าไก่</b><span>มันกะทิ เปรี้ยวมะนาว ไม่เผ็ดมาก ถูกใจทุกคน</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="2"><b>แกงส้มชะอมกุ้ง</b><span>เปรี้ยวแซบ ชะอมทอดชุบน้ำแกงคือที่สุด</span></li>
+          <li data-type="soup" data-meals="lunch dinner latenight" data-price="1"><b>ต้มจืดเต้าหู้หมูสับ</b><span>วันที่ไม่อยากกินเผ็ด ถ้วยนี้ช่วยได้</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="1"><b>แกงป่าหมู</b><span>เผ็ดร้อนแบบไม่ใส่กะทิ ผักเยอะ</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="1"><b>พะแนงหมู</b><span>แกงข้นหอมใบมะกรูด ราดข้าวอร่อยกว่ากินเปล่า</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="2"><b>แกงมัสมั่นไก่</b><span>หวานหอมเครื่องเทศ มันฝรั่งนุ่มๆ</span></li>
+          <li data-type="soup" data-meals="dinner latenight" data-price="2"><b>ต้มแซ่บกระดูกอ่อน</b><span>น้ำใสเปรี้ยวเผ็ด หอมสมุนไพร เหมาะกับวันฝนตก</span></li>
+          <li data-type="soup" data-meals="lunch" data-price="1"><b>แกงไตปลา</b><span>เผ็ดจัดจ้านแบบใต้ ผักสดแกล้มเต็มจาน</span></li>
+          <li data-type="soup" data-meals="breakfast latenight" data-price="1"><b>ต้มเลือดหมู</b><span>น้ำซุปร้อนๆ ตับหมูนุ่ม กินคู่ข้าวสวย</span></li>
+          <li data-type="soup" data-meals="lunch latenight" data-price="1"><b>เกาเหลาเลือดหมู</b><span>สายไม่กินแป้งเลือกทางนี้</span></li>
+          <li data-type="soup" data-meals="dinner latenight" data-price="2"><b>จิ้มจุ่ม</b><span>หม้อดินควันขึ้น น้ำจิ้มแจ่วรสจัด</span></li>
+          <li data-type="soup" data-meals="lunch dinner" data-price="2"><b>แกงเผ็ดเป็ดย่าง</b><span>เป็ดย่างกับองุ่นหรือลิ้นจี่ หวานเผ็ดลงตัว</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>ยำ ตำ ลาบ</h3>
+        <ul>
+          <li data-type="salad" data-meals="lunch dinner latenight" data-price="1"><b>ส้มตำไทย</b><span>หวานเปรี้ยวถั่วเยอะ สายไม่กินปลาร้าเริ่มตรงนี้</span></li>
+          <li data-type="salad" data-meals="lunch dinner latenight" data-price="1"><b>ส้มตำปูปลาร้า</b><span>แซบนัวแบบอีสาน กลิ่นแรงแต่ใจรัก</span></li>
+          <li data-type="salad" data-meals="dinner" data-price="2"><b>ตำถาด</b><span>ถาดใหญ่มีทุกอย่าง เหมาะกับไปเป็นแก๊ง</span></li>
+          <li data-type="salad" data-meals="lunch dinner" data-price="1"><b>ลาบหมู</b><span>ข้าวคั่วหอม ผักสดแกล้ม กินคู่ข้าวเหนียว</span></li>
+          <li data-type="salad" data-meals="lunch dinner" data-price="1"><b>น้ำตกหมู</b><span>หมูย่างหั่นชิ้นคลุกเครื่องลาบ เคี้ยวเพลิน</span></li>
+          <li data-type="salad" data-meals="lunch dinner" data-price="1"><b>ยำวุ้นเส้นหมูสับ</b><span>เปรี้ยวเผ็ดเบาๆ ไม่หนักท้อง</span></li>
+          <li data-type="salad" data-meals="latenight" data-price="1"><b>ยำมาม่า</b><span>ของโปรดคนนอนดึก ทำง่าย แซบไว</span></li>
+          <li data-type="salad" data-meals="lunch dinner" data-price="1"><b>ยำปลาดุกฟู</b><span>กรอบฟูคู่น้ำยำมะม่วงเปรี้ยว</span></li>
+          <li data-type="salad" data-meals="dinner" data-price="2"><b>พล่ากุ้ง</b><span>กุ้งสดกับน้ำพล่าหอมตะไคร้ สดชื่นทันที</span></li>
+          <li data-type="salad" data-meals="lunch dinner" data-price="1"><b>ตำซั่ว</b><span>ส้มตำใส่ขนมจีน อิ่มกว่าตำธรรมดาอีกขั้น</span></li>
+          <li data-type="salad" data-meals="dinner" data-price="2"><b>ยำรวมมิตรทะเล</b><span>ทะเลเต็มจาน น้ำยำจี๊ดจ๊าด</span></li>
+          <li data-type="salad" data-meals="lunch dinner" data-price="1"><b>ซุปหน่อไม้</b><span>หน่อไม้คลุกย่านางแบบอีสาน กินคู่ไก่ย่าง</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>ปิ้งย่าง ทอด</h3>
+        <ul>
+          <li data-type="grill" data-meals="dinner latenight" data-price="3"><b>หมูกระทะ</b><span>ย่างไปคุยไป ควันเต็มหัวแต่ใจฟู</span></li>
+          <li data-type="grill" data-meals="lunch dinner" data-price="1"><b>ไก่ย่างข้าวเหนียว</b><span>หนังกรอบ เนื้อฉ่ำ จิ้มแจ่วแล้วจบ</span></li>
+          <li data-type="grill" data-meals="dinner latenight" data-price="1"><b>คอหมูย่าง</b><span>มันแทรกนุ่ม จิ้มแจ่วมะขาม</span></li>
+          <li data-type="grill" data-meals="lunch dinner" data-price="1"><b>ไก่ทอดหาดใหญ่</b><span>หอมเจียวกรอบๆ โรยเต็ม กินคู่ข้าวเหนียว</span></li>
+          <li data-type="grill" data-meals="lunch dinner" data-price="1"><b>หมูทอดกระเทียม</b><span>กับข้าวที่เด็กและผู้ใหญ่ยกมือให้</span></li>
+          <li data-type="grill" data-meals="dinner" data-price="2"><b>ปลาเผาเกลือ</b><span>ปลาเนื้อขาวยัดตะไคร้ ห่อผักจิ้มน้ำจิ้มซีฟู้ด</span></li>
+          <li data-type="grill" data-meals="dinner" data-price="3"><b>กุ้งเผา</b><span>กุ้งแม่น้ำมันเยิ้ม สำหรับวันที่อยากให้รางวัลตัวเอง</span></li>
+          <li data-type="grill" data-meals="lunch dinner" data-price="1"><b>หมูสะเต๊ะ</b><span>น้ำจิ้มถั่วกับอาจาด หวานมันลงตัว</span></li>
+          <li data-type="grill" data-meals="latenight" data-price="1"><b>ลูกชิ้นปิ้ง</b><span>ไม้ละไม่กี่บาท กินเพลินจนนับไม่ทัน</span></li>
+          <li data-type="grill" data-meals="dinner latenight" data-price="1"><b>ไส้กรอกอีสาน</b><span>เปรี้ยวนิดๆ กินคู่ขิงและพริกสด</span></li>
+          <li data-type="grill" data-meals="lunch dinner" data-price="1"><b>ทอดมันปลากราย</b><span>เด้งหนึบ จิ้มอาจาดแตงกวา</span></li>
+          <li data-type="grill" data-meals="dinner latenight" data-price="1"><b>ปีกไก่ทอดน้ำปลา</b><span>เค็มหอม กรอบ กับแกล้มชั้นดี</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>อาหารต่างชาติ</h3>
+        <ul>
+          <li data-type="intl" data-meals="lunch dinner" data-price="2"><b>ซูชิ</b><span>คำเล็กๆ แต่หยุดไม่อยู่</span></li>
+          <li data-type="intl" data-meals="lunch dinner latenight" data-price="3"><b>ราเมนทงคตสึ</b><span>น้ำซุปกระดูกหมูข้นๆ กับไข่ยางมะตูม</span></li>
+          <li data-type="intl" data-meals="dinner" data-price="3"><b>ชาบู</b><span>ต้มเองจิ้มเอง นั่งคุยได้ยาวจนร้านจะปิด</span></li>
+          <li data-type="intl" data-meals="lunch dinner" data-price="2"><b>ข้าวหน้าหมูทอดทงคัตสึ</b><span>หมูชุบเกล็ดขนมปังทอดกรอบบนข้าวร้อน</span></li>
+          <li data-type="intl" data-meals="dinner" data-price="3"><b>ปิ้งย่างเกาหลี</b><span>ห่อผักกาดกับกิมจิ ย่างเองสนุกกว่า</span></li>
+          <li data-type="intl" data-meals="lunch latenight" data-price="2"><b>ต็อกบกกี</b><span>แป้งหนึบซอสเผ็ดหวาน แบบในซีรีส์</span></li>
+          <li data-type="intl" data-meals="dinner latenight" data-price="2"><b>ไก่ทอดเกาหลี</b><span>กรอบสองชั้นเคลือบซอส กินคู่โคล่าเย็นๆ</span></li>
+          <li data-type="intl" data-meals="dinner latenight" data-price="3"><b>หมาล่าหม้อไฟ</b><span>ชาลิ้นเผ็ดปาก เลือกเครื่องเองได้ไม่อั้น</span></li>
+          <li data-type="intl" data-meals="breakfast lunch" data-price="2"><b>ติ่มซำ</b><span>เข่งเล็กๆ ขนมจีบ ฮะเก๋า สั่งไม่ยั้ง</span></li>
+          <li data-type="intl" data-meals="dinner" data-price="3"><b>เป็ดปักกิ่ง</b><span>หนังกรอบห่อแป้งบางจิ้มซอส มื้อฉลอง</span></li>
+          <li data-type="intl" data-meals="dinner latenight" data-price="3"><b>พิซซ่า</b><span>แชร์กันถาดใหญ่ ไม่ต้องใช้ช้อน</span></li>
+          <li data-type="intl" data-meals="lunch dinner latenight" data-price="2"><b>เบอร์เกอร์</b><span>เนื้อฉ่ำชีสเยิ้ม กินมือเลอะให้สุด</span></li>
+          <li data-type="intl" data-meals="dinner" data-price="2"><b>สเต็กหมู</b><span>ร้านสเต็กราคาเป็นมิตร ขอซอสพริกไทยดำ</span></li>
+          <li data-type="intl" data-meals="lunch dinner" data-price="2"><b>สปาเกตตีคาโบนารา</b><span>ครีมข้น เบคอนกรอบ อิ่มแบบอุ่นใจ</span></li>
+          <li data-type="intl" data-meals="lunch dinner" data-price="2"><b>แกงกะหรี่ญี่ปุ่น</b><span>ข้นหวานไม่เผ็ด วางหมูทอดด้านบนยิ่งดี</span></li>
+          <li data-type="intl" data-meals="breakfast lunch" data-price="2"><b>เฝอ</b><span>น้ำซุปใสหอมเครื่องเทศแบบเวียดนาม ผักสดเยอะ</span></li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>ของหวาน ของว่าง</h3>
+        <ul>
+          <li data-type="dessert" data-meals="dinner latenight" data-price="2"><b>บิงซู</b><span>น้ำแข็งไสนุ่มเหมือนหิมะ แชร์กันสองคนกำลังดี</span></li>
+          <li data-type="dessert" data-meals="lunch dinner" data-price="2"><b>ข้าวเหนียวมะม่วง</b><span>ของหวานประจำชาติ หน้าร้อนยิ่งต้องกิน</span></li>
+          <li data-type="dessert" data-meals="dinner latenight" data-price="1"><b>บัวลอยไข่หวาน</b><span>กะทิอุ่นๆ ไข่หวานแตกกลางถ้วย</span></li>
+          <li data-type="dessert" data-meals="breakfast" data-price="1"><b>ปาท่องโก๋จิ้มสังขยา</b><span>คู่หูกาแฟโบราณยามเช้า</span></li>
+          <li data-type="dessert" data-meals="latenight" data-price="1"><b>โรตีกล้วยไข่</b><span>แป้งกรอบราดนมข้นหวาน ของหวานหลังเที่ยงคืน</span></li>
+          <li data-type="dessert" data-meals="latenight" data-price="1"><b>ขนมปังปิ้งสังขยา</b><span>สังขยาใบเตยเยิ้มๆ ต่อคิวก็ยอม</span></li>
+          <li data-type="dessert" data-meals="lunch dinner" data-price="1"><b>เต้าฮวยฟรุตสลัด</b><span>เย็นชื่นใจ สีสันสดใส</span></li>
+          <li data-type="dessert" data-meals="lunch" data-price="1"><b>ไอศกรีมกะทิ</b><span>ใส่ขนมปังหรือข้าวเหนียวด้วยก็ได้</span></li>
+          <li data-type="dessert" data-meals="lunch dinner" data-price="1"><b>ชาไข่มุก</b><span>หวานระดับไหนก็ได้ ขอไข่มุกเยอะๆ</span></li>
+          <li data-type="dessert" data-meals="lunch" data-price="2"><b>แพนเค้กญี่ปุ่น</b><span>ฟูนุ่มสั่นดุ๊กดิ๊ก มื้อสายๆ ที่คาเฟ่</span></li>
+          <li data-type="dessert" data-meals="breakfast" data-price="2"><b>ครัวซองต์กับกาแฟ</b><span>ขอบกรอบ ข้างในเป็นชั้น เริ่มวันแบบคาเฟ่</span></li>
+          <li data-type="dessert" data-meals="lunch" data-price="1"><b>ลอดช่องน้ำกะทิ</b><span>หวานมันเย็นชื่นใจ วันร้อนๆ ต้องมี</span></li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <section class="landing-section landing-closing" aria-labelledby="closingTitle">
+    <h2 id="closingTitle">ได้เมนูแล้ว แต่ขี้เกียจหาร้าน?</h2>
+    <a href="/" class="btn btn-primary landing-start-btn">ให้ HEWKAO สุ่มร้านใกล้ฉัน</a>
+    <p class="landing-cta-note">ร้านจริงจาก Google Maps รอบตัวคุณ</p>
+  </section>
+
+  <footer class="landing-footer">
+    <p>© HEWKAO หิวข้าว</p>
+    <a href="/privacy.html">นโยบายความเป็นส่วนตัว</a>
+  </footer>
+</main>
+
+<script type="module" src="/src/random-menu.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 // the public URL used for canonical links and the sitemap.
 const PAGES = [
   { name: 'main', file: 'index.html', path: '/' },
+  { name: 'randomMenu', file: 'random-menu/index.html', path: '/random-menu/' },
 ];
 
 // Adds the SEO tags each page would otherwise have to repeat by hand. Pages

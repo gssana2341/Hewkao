@@ -22,8 +22,12 @@ html.returning #splash[hidden]{ display:flex !important; }
   padding:calc(var(--sp-4) + env(safe-area-inset-top)) 0 var(--sp-4);
 }
 .landing-logo{ display:block; height:28px; width:auto; }
+.landing-nav{ display:flex; align-items:center; gap:var(--sp-4); }
 .landing-top-link{ font-size:.85rem; font-weight:700; color:var(--color-text-muted); text-decoration:none; }
 .landing-top-link:hover{ color:var(--color-accent-dark); }
+.landing-alt-link{ margin-top:var(--sp-2); font-size:.88rem; font-weight:700; color:var(--color-accent-dark); text-decoration:none; }
+.landing-alt-link:hover{ text-decoration:underline; }
+.landing details p a{ font-weight:700; color:var(--color-accent-dark); }
 
 /* Hero */
 .landing-hero{ display:grid; gap:var(--sp-8); align-items:center; padding:var(--sp-6) 0 var(--sp-8); }

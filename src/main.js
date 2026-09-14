@@ -50,9 +50,12 @@ function getPosition() {
 let entered = false;
 let locating = false;
 
+// Every failure also offers the random menu page, which needs no location —
+// so a visitor who won't share it still leaves with something to eat.
 function showSplashError(message) {
   splashSub.textContent = message;
   splashRetryBtn.hidden = false;
+  document.getElementById('splashMenuLink').hidden = false;
 }
 
 // The map loads underneath the still-opaque splash, which only fades once the

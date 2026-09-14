@@ -1,0 +1,85 @@
+/* ---------- Random menu page (/random-menu/) ---------- */
+/* Built on the landing page's layout (landing.css): same scroller, header,
+   sections and footer. Only the wheel and the dish list live here. */
+.menu-hero{ padding:var(--sp-6) 0 var(--sp-5); }
+
+.menu-tool{ display:grid; gap:var(--sp-6); padding-bottom:var(--sp-8); }
+@media (min-width:860px){
+  .menu-tool{ grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:start; gap:var(--sp-8); }
+}
+
+.menu-filter + .menu-filter{ margin-top:var(--sp-4); }
+.menu-filter .prefs-label{ margin:0 0 var(--sp-1); }
+.menu-filters .chip{ min-height:40px; padding:var(--sp-1) var(--sp-4); }
+
+.menu-machine{
+  display:grid; justify-items:center; gap:var(--sp-4);
+  padding:var(--sp-6) var(--sp-5);
+  border-radius:var(--radius-lg);
+  background:var(--color-accent-softer);
+}
+.menu-window{
+  position:relative;
+  width:100%; max-width:360px;
+  height:140px;
+  border-radius:var(--radius-md);
+  background:var(--color-bg);
+  box-shadow:var(--shadow-md);
+  overflow:hidden;
+}
+/* Fade overlay on the fixed window (see .landing-slot-window::before). */
+.menu-window::before{
+  content:"";
+  position:absolute; inset:0;
+  z-index:1;
+  background:linear-gradient(var(--color-bg), transparent 26%, transparent 74%, var(--color-bg));
+  pointer-events:none;
+}
+.menu-window::after{
+  content:"";
+  position:absolute; left:var(--sp-3); right:var(--sp-3); top:50%;
+  z-index:2;
+  height:64px; transform:translateY(-50%);
+  border:2.5px solid var(--color-accent);
+  border-radius:var(--radius-md);
+  pointer-events:none;
+}
+/* 38px top padding centres the first 64px row in the 140px window. */
+.menu-reel{
+  display:flex; flex-direction:column;
+  padding-top:38px;
+  will-change:transform;
+}
+.menu-reel span{
+  flex:none;
+  height:64px;
+  display:flex; align-items:center; justify-content:center;
+  padding:0 var(--sp-6);
+  font-size:1.3rem; font-weight:800; line-height:1.2;
+  text-align:center;
+}
+
+.menu-result{ display:grid; justify-items:center; gap:var(--sp-1); text-align:center; }
+.menu-quip{ font-size:.85rem; font-weight:700; color:var(--color-accent-dark); }
+.menu-dish{ font-size:1.6rem; font-weight:800; line-height:1.3; text-wrap:balance; }
+.menu-blurb{ max-width:28em; font-size:.92rem; line-height:1.6; color:var(--color-text-muted); }
+.menu-actions{ display:flex; flex-wrap:wrap; justify-content:center; gap:var(--sp-2); margin-top:var(--sp-3); }
+.menu-actions .btn{
+  flex:none;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:44px;
+  padding:var(--sp-2) var(--sp-5);
+  font-size:.88rem;
+  text-decoration:none;
+}
+.menu-actions .btn-secondary{ background:var(--color-bg); }
+.menu-spin-btn{ min-width:220px; }
+.menu-spin-btn:disabled{ opacity:.5; cursor:default; }
+
+.menu-list-lede{ max-width:44em; margin-bottom:var(--sp-6); font-size:.92rem; line-height:1.7; color:var(--color-text-muted); }
+.menu-list{ display:grid; gap:var(--sp-8); }
+@media (min-width:760px){ .menu-list{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+.menu-list h3{ margin-bottom:var(--sp-3); font-size:1.05rem; font-weight:800; }
+.menu-list ul{ list-style:none; padding:0; margin:0; display:grid; gap:var(--sp-3); }
+.menu-list li{ font-size:.88rem; line-height:1.55; color:var(--color-text-muted); }
+.menu-list li b{ display:block; font-weight:700; color:var(--color-text); }

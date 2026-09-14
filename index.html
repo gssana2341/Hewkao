@@ -45,7 +45,10 @@
 <main id="landing" class="landing">
   <header class="landing-top">
     <img src="assets/logo-horizontal.png" alt="HEWKAO" class="landing-logo" width="76" height="28">
-    <a class="landing-top-link" href="#faq">คำถามที่พบบ่อย</a>
+    <nav class="landing-nav" aria-label="เมนูหลัก">
+      <a class="landing-top-link" href="/random-menu/">สุ่มเมนูอาหาร</a>
+      <a class="landing-top-link" href="#faq">คำถามที่พบบ่อย</a>
+    </nav>
   </header>
 
   <section class="landing-hero">
@@ -66,6 +69,7 @@
           สุ่มร้านใกล้ฉัน
         </button>
         <p class="landing-cta-note">ใช้ฟรี ไม่ต้องสมัคร · ต้องอนุญาตตำแหน่งเพื่อหาร้านใกล้คุณ</p>
+        <a class="landing-alt-link" href="/random-menu/">ไม่อยากเปิดตำแหน่ง? สุ่มเมนูอาหารแทน →</a>
       </div>
     </div>
     <div class="landing-slot" aria-hidden="true">
@@ -105,7 +109,7 @@
     </details>
     <details>
       <summary>ทำไมต้องขอตำแหน่ง</summary>
-      <p>เพื่อหาร้านที่อยู่ใกล้คุณจริงๆ ตำแหน่งถูกใช้ค้นหาร้านกับ Google Maps ตอนนั้นเท่านั้น เราไม่เก็บไว้บนเซิร์ฟเวอร์</p>
+      <p>เพื่อหาร้านที่อยู่ใกล้คุณจริงๆ ตำแหน่งถูกใช้ค้นหาร้านกับ Google Maps ตอนนั้นเท่านั้น เราไม่เก็บไว้บนเซิร์ฟเวอร์ ถ้าไม่อยากเปิดตำแหน่ง ลอง<a href="/random-menu/">สุ่มเมนูอาหาร</a>แทนได้เลย</p>
     </details>
     <details>
       <summary>ข้อมูลร้านมาจากไหน</summary>
@@ -121,6 +125,7 @@
     <h2 id="closingTitle">หิวแล้วใช่ไหม</h2>
     <button type="button" class="btn btn-primary landing-start-btn" data-start>สุ่มร้านใกล้ฉัน</button>
     <p class="landing-cta-note">ใช้เวลาไม่ถึงนาที</p>
+    <a class="landing-alt-link" href="/random-menu/">หรือสุ่มแค่เมนู ไม่ต้องใช้ตำแหน่ง →</a>
   </section>
 
   <footer class="landing-footer">
@@ -135,6 +140,7 @@
   <p class="splash-text">จะกินอะไรดี คิดไม่ออก?</p>
   <p class="splash-sub" id="splashSub">กำลังค้นหาตำแหน่งของคุณ…</p>
   <button id="splashRetryBtn" class="btn btn-primary splash-retry-btn" hidden>ลองอีกครั้ง</button>
+  <a id="splashMenuLink" class="splash-alt-link" href="/random-menu/" hidden>ไม่อยากเปิดตำแหน่ง? ไปสุ่มเมนูอาหารแทน</a>
 </div>
 
 <!-- 2. Main app -->
