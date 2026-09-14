@@ -20,12 +20,6 @@
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "THB" }
 }
 </script>
-<script>
-  // Returning visitors whose last location request succeeded skip the landing
-  // page. Runs before first paint so the landing never flashes; main.js then
-  // confirms the permission is still granted (key: LOCATION_OK_KEY in main.js).
-  try { if (localStorage.getItem('hewkao_location_ok') === '1') document.documentElement.classList.add('returning'); } catch (e) {}
-</script>
 <link rel="icon" href="/icons/favicon-96.png" sizes="96x96" type="image/png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -41,7 +35,7 @@
 </head>
 <body>
 
-<!-- 0. Landing: what first-time visitors and search engines see -->
+<!-- 0. Landing: sits under the splash, shown only when location fails -->
 <main id="landing" class="landing">
   <header class="landing-top">
     <img src="assets/logo-horizontal.png" alt="HEWKAO" class="landing-logo" width="76" height="28">
@@ -53,6 +47,7 @@
 
   <section class="landing-hero">
     <div>
+      <p id="landingNotice" class="landing-notice" role="status" hidden></p>
       <p class="landing-eyebrow">หิวข้าว แต่คิดไม่ออก?</p>
       <h1>วันนี้กินอะไรดี?<br><span>ให้ HEWKAO สุ่มให้</span></h1>
       <p class="landing-lede">กดปุ่มเดียว HEWKAO สุ่มร้านอาหารที่อยู่ใกล้คุณจริงๆ พร้อมเรตติ้ง ระยะทาง และบอกว่าร้านเปิดอยู่ไหม แล้วกดนำทางด้วย Google Maps หรือสั่งผ่าน LINE MAN / ShopeeFood ต่อได้เลย</p>
@@ -134,13 +129,13 @@
   </footer>
 </main>
 
-<!-- 1. Splash -->
-<div id="splash" class="splash" hidden>
+<!-- 1. Splash: shown on load while asking for location -->
+<div id="splash" class="splash">
   <img src="assets/logo-full.png" alt="HEWKAO" class="splash-logo" width="200" height="183">
   <p class="splash-text">จะกินอะไรดี คิดไม่ออก?</p>
+  <p class="splash-hint">HEWKAO สุ่มร้านอาหารรอบตัวคุณให้ แค่อนุญาตตำแหน่งก็เริ่มได้เลย</p>
   <p class="splash-sub" id="splashSub">กำลังค้นหาตำแหน่งของคุณ…</p>
   <button id="splashRetryBtn" class="btn btn-primary splash-retry-btn" hidden>ลองอีกครั้ง</button>
-  <a id="splashMenuLink" class="splash-alt-link" href="/random-menu/" hidden>ไม่อยากเปิดตำแหน่ง? ไปสุ่มเมนูอาหารแทน</a>
 </div>
 
 <!-- 2. Main app -->

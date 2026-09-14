@@ -57,7 +57,7 @@ h1,h2,h3,p{margin:0;}
 @keyframes logo-pulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.045); } }
 .splash-text{ font-size:1.3rem; font-weight:700; color:var(--color-text); }
 .splash-sub{ font-size:.9rem; color:var(--color-text-muted); font-weight:500; }
-.splash-alt-link{ font-size:.85rem; font-weight:700; color:var(--color-accent-dark); text-decoration:none; }
+.splash-hint{ max-width:22em; font-size:.92rem; line-height:1.6; color:var(--color-text); }
 
 @media (prefers-reduced-motion: reduce){
   .splash-logo{ animation:none; }

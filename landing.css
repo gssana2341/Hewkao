@@ -1,7 +1,8 @@
 /* ---------- Landing page ---------- */
-/* What first-time visitors and search engines see: real content in the HTML,
-   with location only requested from a start button. It is its own scroller
-   because body stays overflow:hidden for the full-screen map app. */
+/* Sits under the splash and is only revealed when location can't be had
+   (main.js), so those visitors and search engines get real content and a
+   retry. It is its own scroller because body stays overflow:hidden for the
+   full-screen map app. */
 .landing{
   position:fixed; inset:0;
   z-index:95;
@@ -12,10 +13,16 @@
 }
 .landing > *{ max-width:1040px; margin-left:auto; margin-right:auto; }
 
-/* Returning visitors (see the inline script in index.html) go straight to the
-   splash; main.js removes the class if location is no longer granted. */
-html.returning .landing{ display:none; }
-html.returning #splash[hidden]{ display:flex !important; }
+/* Why the visitor is seeing this page instead of the map. */
+.landing-notice{
+  max-width:36em;
+  margin-bottom:var(--sp-5);
+  padding:var(--sp-3) var(--sp-4);
+  border-radius:var(--radius-md);
+  background:var(--color-accent-soft);
+  color:var(--color-accent-dark);
+  font-size:.9rem; font-weight:600; line-height:1.6;
+}
 
 .landing-top{
   display:flex; align-items:center; justify-content:space-between;

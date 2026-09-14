@@ -44,8 +44,6 @@ let recent = [];
 let spinCount = 0;
 let spinning = false;
 
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 function currentPool() {
   return DISHES.filter(d =>
     (!filters.meal || d.meals.includes(filters.meal)) &&
@@ -79,22 +77,45 @@ function quipFor(count) {
   return QUIPS[Math.floor(Math.random() * QUIPS.length)];
 }
 
-function animateReel(pool, dish) {
+// Resolves on transitionend, with a watchdog in case the event never fires.
+function animateReelTo(px, durationSec, easing) {
   return new Promise(resolve => {
-    const names = Array.from({ length: 17 }, () => pool[Math.floor(Math.random() * pool.length)].name);
-    names.push(dish.name);
-    reel.replaceChildren(...names.map(name => Object.assign(document.createElement('span'), { textContent: name })));
-    reel.style.transition = 'none';
-    reel.style.transform = 'translateY(0)';
-    void reel.offsetHeight;
-    const duration = reduceMotion ? 0 : 1.8;
-    // Double rAF so the reset above paints before the transition starts.
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      reel.removeEventListener('transitionend', finish);
+      resolve();
+    };
+    // Double rAF so the reset before the first phase paints before it starts.
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      reel.style.transition = `transform ${duration}s cubic-bezier(0.15,0.65,0.25,1)`;
-      reel.style.transform = `translateY(${-(names.length - 1) * ROW_H}px)`;
+      reel.style.transition = `transform ${durationSec}s ${easing}`;
+      reel.style.transform = `translateY(${px}px)`;
     }));
-    setTimeout(resolve, duration * 1000 + 150);
+    reel.addEventListener('transitionend', finish);
+    setTimeout(finish, durationSec * 1000 + 400);
   });
+}
+
+// Same two-phase timing as the map app's slot (spin-result.js): a fast
+// constant-speed spin, then a long deceleration onto the pick. And like that
+// slot it always plays in full, even with prefers-reduced-motion — the spin is
+// the whole interaction here, and skipping it (common on Windows with
+// animation effects turned off) made the wheel look like it stopped instantly.
+async function animateReel(pool, dish) {
+  const FAST_COUNT = 16;
+  const SLOW_COUNT = 10;
+  const total = FAST_COUNT + SLOW_COUNT;
+  const names = Array.from({ length: total - 1 }, () => pool[Math.floor(Math.random() * pool.length)].name);
+  names.push(dish.name);
+  reel.replaceChildren(...names.map(name => Object.assign(document.createElement('span'), { textContent: name })));
+  reel.style.transition = 'none';
+  reel.style.transform = 'translateY(0)';
+  void reel.offsetHeight;
+  const finalY = -(total - 1) * ROW_H;
+  await animateReelTo(-FAST_COUNT * ROW_H, 1.1, 'linear');
+  await animateReelTo(finalY, 1.9, 'cubic-bezier(0.15,0.65,0.25,1)');
+  await new Promise(resolve => setTimeout(resolve, 250));
 }
 
 async function spin() {
