@@ -1,4 +1,4 @@
-import { PRICE_LABEL } from './constants.js';
+import { PRICE_LABEL, SHOW_LIST_PHOTOS } from './constants.js';
 import { haversine } from './utils.js';
 import { getRadius } from './preferences.js';
 
@@ -9,17 +9,27 @@ const PLACES_INCLUDED_TYPES = ['restaurant', 'cafe', 'bakery', 'fast_food_restau
 // dining), so without this a search near any hotel-dense area comes back
 // half full of hotels instead of standalone restaurants/chains — confirmed
 // by testing near Siam, Bangkok: 10 of the top 20 results were hotels.
+// Malls and shops get the same generic tag for their food courts: Central
+// Park and The Market Bangkok both came back as "restaurants" near Siam.
 const PLACES_EXCLUDED_PRIMARY_TYPES = [
   'lodging', 'hotel', 'motel', 'resort_hotel', 'extended_stay_hotel',
   'bed_and_breakfast', 'guest_house', 'hostel', 'inn',
+  'shopping_mall', 'department_store', 'supermarket', 'convenience_store', 'gas_station',
 ];
+const EXCLUDED_PRIMARY_TYPE_SET = new Set(PLACES_EXCLUDED_PRIMARY_TYPES);
+
+// Pro + Enterprise fields only. Asking for any Atmosphere field (reviews,
+// dineIn, takeout, delivery, …) bills the whole request at the Enterprise +
+// Atmosphere rate, so reviews are a link out to Google Maps instead.
 const PLACES_FIELD_MASK = [
-  'places.id', 'places.displayName', 'places.location', 'places.types',
-  'places.formattedAddress', 'places.internationalPhoneNumber', 'places.websiteUri',
-  'places.priceLevel', 'places.rating', 'places.userRatingCount', 'places.photos',
-  'places.reviews', 'places.currentOpeningHours.openNow',
-  'places.dineIn', 'places.takeout', 'places.delivery',
+  'places.id', 'places.displayName', 'places.location', 'places.types', 'places.primaryType',
+  'places.formattedAddress', 'places.googleMapsUri', 'places.photos',
+  'places.internationalPhoneNumber', 'places.websiteUri', 'places.priceLevel',
+  'places.rating', 'places.userRatingCount', 'places.currentOpeningHours.openNow',
 ].join(',');
+
+// Nearby Search's hard cap per request — it has no pagination.
+const NEARBY_MAX_RESULTS = 20;
 
 // Keyword hints for when Google leaves a place with only generic types
 // (restaurant/food/point_of_interest) — very common for small local Thai
@@ -57,7 +67,7 @@ export function photoUrl(photoName, maxWidthPx) {
   return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidthPx}&key=${GOOGLE_API_KEY}`;
 }
 
-export async function fetchNearby(lat, lng) {
+async function searchNearby(lat, lng, rankPreference) {
   const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
     method: 'POST',
     headers: {
@@ -68,46 +78,69 @@ export async function fetchNearby(lat, lng) {
     body: JSON.stringify({
       includedTypes: PLACES_INCLUDED_TYPES,
       excludedPrimaryTypes: PLACES_EXCLUDED_PRIMARY_TYPES,
-      maxResultCount: 20,
+      maxResultCount: NEARBY_MAX_RESULTS,
+      rankPreference,
       languageCode: 'th',
       locationRestriction: {
         circle: { center: { latitude: lat, longitude: lng }, radius: getRadius() },
       },
     }),
   });
-  if (!res.ok) throw new Error('nearby error ' + res.status);
+  if (!res.ok) throw new Error(`nearby ${rankPreference} error ${res.status}`);
   const data = await res.json();
   return data.places || [];
 }
 
+// Ranking by popularity alone (the API default) let the 20 best-known places
+// anywhere in the radius crowd out small shops right next to the user.
+// Confirmed at มทส. ประตู 1: POPULARITY returned places up to 3 km away and
+// none of the five eateries within 170 m, while DISTANCE returned all five.
+// So the nearest 20 always load, and only when that hits the cap (a dense
+// area) do the popular 20 get merged in, so well-known spots further out
+// still make it into the pool.
+export async function fetchNearby(lat, lng) {
+  const nearest = await searchNearby(lat, lng, 'DISTANCE');
+  if (nearest.length < NEARBY_MAX_RESULTS) return nearest;
+  const popular = await searchNearby(lat, lng, 'POPULARITY').catch(err => {
+    console.warn('[HEWKAO] popular nearby search failed:', err);
+    return [];
+  });
+  const seen = new Set(nearest.map(p => p.id));
+  return nearest.concat(popular.filter(p => !seen.has(p.id)));
+}
+
+function absoluteUrl(uri) {
+  if (!uri) return '';
+  return uri.startsWith('//') ? `https:${uri}` : uri;
+}
+
 export function processResults(places, [uLat, uLng]) {
   const list = places
-    .filter(p => p.displayName?.text && p.location)
-    .map(p => ({
-      id: p.id,
-      name: p.displayName.text,
-      lat: p.location.latitude,
-      lng: p.location.longitude,
-      category: mapGoogleCategory(p.types, p.displayName?.text),
-      address: p.formattedAddress || '',
-      tel: p.internationalPhoneNumber || '',
-      website: p.websiteUri || '',
-      rating: p.rating ?? null,
-      ratingCount: p.userRatingCount ?? 0,
-      priceLabel: PRICE_LABEL[p.priceLevel] || '',
-      thumbUrl: p.photos?.[0] ? photoUrl(p.photos[0].name, 160) : '',
-      photoUrl: p.photos?.[0] ? photoUrl(p.photos[0].name, 640) : '',
-      openNow: p.currentOpeningHours?.openNow ?? null,
-      dineIn: p.dineIn ?? null,
-      takeout: p.takeout ?? null,
-      delivery: p.delivery ?? null,
-      reviews: (p.reviews || []).slice(0, 3).map(rv => ({
-        author: rv.authorAttribution?.displayName || 'ผู้ใช้ Google',
-        rating: rv.rating || 0,
-        text: rv.text?.text || '',
-      })),
-      distance: haversine(uLat, uLng, p.location.latitude, p.location.longitude),
-    }));
+    .filter(p => p.displayName?.text && p.location && !EXCLUDED_PRIMARY_TYPE_SET.has(p.primaryType))
+    .map(p => {
+      const photo = p.photos?.[0];
+      const author = photo?.authorAttributions?.[0];
+      return {
+        id: p.id,
+        name: p.displayName.text,
+        lat: p.location.latitude,
+        lng: p.location.longitude,
+        category: mapGoogleCategory(p.types, p.displayName.text),
+        address: p.formattedAddress || '',
+        tel: p.internationalPhoneNumber || '',
+        website: p.websiteUri || '',
+        mapsUrl: p.googleMapsUri || '',
+        rating: p.rating ?? null,
+        ratingCount: p.userRatingCount ?? 0,
+        priceLabel: PRICE_LABEL[p.priceLevel] || '',
+        thumbUrl: SHOW_LIST_PHOTOS && photo ? photoUrl(photo.name, 160) : '',
+        photoUrl: photo ? photoUrl(photo.name, 640) : '',
+        photoAuthor: author?.displayName || '',
+        photoAuthorUrl: absoluteUrl(author?.uri),
+        openNow: p.currentOpeningHours?.openNow ?? null,
+        distance: haversine(uLat, uLng, p.location.latitude, p.location.longitude),
+      };
+    });
   list.sort((a, b) => a.distance - b.distance);
   return list;
 }

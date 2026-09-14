@@ -23,7 +23,6 @@ export const CATS = [
 export const CAT_BY_ID = Object.fromEntries(CATS.map(c => [c.id, c]));
 export function catOf(r) { return CAT_BY_ID[r.category] || CAT_BY_ID.other; }
 
-export const FALLBACK_LATLNG = [13.7563, 100.5018]; // Bangkok
 export const DISLIKE_KEY = 'hewkao_disliked_categories';
 export const RADIUS_KEY = 'hewkao_search_radius';
 export const OPEN_NOW_KEY = 'hewkao_open_now_only';
@@ -40,11 +39,20 @@ export const PRICE_LABEL = {
   PRICE_LEVEL_VERY_EXPENSIVE: '฿฿฿฿',
 };
 
-// Prototype only: "ไปเอง" works for every result (it's just directions).
-// The delivery options are gated on Google's `delivery` flag and open a
-// search deep-link rather than a real merchant-matched page — LINE MAN and
-// ShopeeFood don't expose a Place ID → merchant ID mapping, so an exact
-// deep link needs real API research before this ships for real.
+// Thumbnails in the restaurant list are billed per image (Place Photos), about
+// 15 per visit when on, so the list shows category icons and only an opened
+// result loads a photo. Flip to true to bring list photos back.
+export const SHOW_LIST_PHOTOS = false;
+
+// Phone login and plan purchases are local simulations (no OTP or payment
+// provider yet). They stay on for `npm run dev`, but the public build hides
+// them unless VITE_DEMO_MODE=true is set explicitly.
+export const DEMO_MODE = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === 'true';
+
+// Prototype only: "ไปเอง" opens Google Maps directions for every result. The
+// delivery options open a search deep-link rather than a real merchant-matched
+// page — LINE MAN and ShopeeFood don't expose a Place ID → merchant ID mapping,
+// so an exact deep link needs real API research before this ships for real.
 export const GO_METHODS = [
   { id: 'self',        label: 'ไปเอง',       icon: 'assets/icon-self.jpg' },
   { id: 'lineman',     label: 'LINE MAN',    icon: 'assets/icon-lineman.png' },

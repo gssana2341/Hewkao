@@ -1,11 +1,20 @@
 import { state } from './state.js';
 import { catOf, GOOGLE_MAP_ID } from './constants.js';
+import { showToast } from './utils.js';
+import { trackEvent } from './analytics.js';
 import { getVisibleRestaurants } from './restaurant-list.js';
 import { showResult } from './spin-result.js';
-import { drawRoute, pointMapAtDestination } from './navigation.js';
 
 const layerBtn = document.getElementById('layerBtn');
 const locateBtn = document.getElementById('locateBtn');
+
+// Google calls this global when it rejects the API key (wrong key, a domain
+// missing from the referrer allowlist, billing disabled). Otherwise the map
+// just turns into a grey "Oops" box, so tell the user and record it.
+window.gm_authFailure = () => {
+  showToast('แผนที่ใช้งานไม่ได้ชั่วคราว ลองใหม่ภายหลัง');
+  trackEvent('maps_auth_failed');
+};
 
 // colorScheme is immutable after a Map is constructed (setOptions has no
 // effect on it), so switching light/dark means building a whole new Map
@@ -59,12 +68,10 @@ export async function initMap() {
 export async function setMapColorScheme(colorSchemeName) {
   const center = state.map.getCenter();
   const zoom = state.map.getZoom();
-  const wasNavigating = state.navigating && state.selected;
 
   state.markersById.forEach(m => { m.map = null; });
   state.markersById.clear();
   if (state.userMarker) state.userMarker.map = null;
-  if (state.routeLayer) { state.routeLayer.setMap(null); state.routeLayer = null; }
 
   state.map = await buildMap({ lat: center.lat(), lng: center.lng() }, zoom, colorSchemeName);
   state.userMarker = new state.AdvancedMarkerElementCtor({
@@ -74,15 +81,11 @@ export async function setMapColorScheme(colorSchemeName) {
     zIndex: 1000,
   });
 
-  // Markers were just wiped above, so renderMarkers() must run first even
-  // when navigating — isolateMarker() only hides/shows markers that already
-  // exist, it can't isolate one out of an empty set.
+  // Markers were just wiped above, so renderMarkers() must run first —
+  // isolateMarker() only hides/shows markers that already exist. Keep "the
+  // pick" isolated if its result sheet is still open.
   renderMarkers();
-  if (wasNavigating) {
-    isolateMarker(state.selected);
-    await drawRoute(state.selected);
-    pointMapAtDestination();
-  }
+  if (state.selected && !document.getElementById('resultSheet').hidden) isolateMarker(state.selected);
 }
 
 export function flyTo([lat, lng], zoom) {

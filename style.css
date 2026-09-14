@@ -98,6 +98,17 @@ h1,h2,h3,p{margin:0;}
 .icon-btn:hover{ box-shadow:var(--shadow-md); }
 .icon-btn:active{ transform:scale(.92); }
 
+/* Unclaimed daily check-in (set by checkin.js on the profile button) */
+.icon-btn.has-dot{ position:relative; }
+.icon-btn.has-dot::after{
+  content:"";
+  position:absolute; top:9px; right:9px;
+  width:9px; height:9px;
+  border-radius:50%;
+  background:var(--color-accent);
+  box-shadow:0 0 0 2px var(--color-bg);
+}
+
 .layer-btn.active{ color:var(--color-accent); box-shadow:0 0 0 2px var(--color-accent), var(--shadow-sm); }
 
 /* ---------- Bottom map-controls cluster ---------- */
@@ -162,7 +173,7 @@ h1,h2,h3,p{margin:0;}
 }
 .restaurant-list::-webkit-scrollbar{ display:none; }
 /* A flat divided list — like Google Maps' own results panel — rather than
-   separate colored cards, so a long list of 20 reads as one calm scroll. */
+   separate colored cards, so a long list reads as one calm scroll. */
 .restaurant-card{
   display:flex; align-items:flex-start; gap:var(--sp-3);
   padding:var(--sp-4) var(--sp-1);
@@ -178,11 +189,14 @@ h1,h2,h3,p{margin:0;}
 .restaurant-card:hover{ background:var(--color-accent-softer); }
 .restaurant-card:active{ background:var(--color-accent-soft); }
 .restaurant-card.active{ background:var(--color-accent-soft); }
+/* Category tile: tinted with the category's own color (set inline as --cat). */
 .card-emoji{
+  --cat:var(--color-accent);
   width:40px; height:40px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  background:var(--color-bg); border-radius:var(--radius-full);
-  box-shadow:0 1px 3px rgba(43,35,32,.1);
+  color:var(--cat);
+  background:color-mix(in srgb, var(--cat) 13%, var(--color-bg));
+  border-radius:var(--radius-full);
 }
 .card-emoji svg{ display:block; }
 .card-photo{
@@ -191,14 +205,13 @@ h1,h2,h3,p{margin:0;}
   object-fit:cover;
   box-shadow:0 1px 3px rgba(43,35,32,.1);
 }
-/* The persistent list uses a bigger, rounded-square photo so rating/status/price
-   are easy to scan at a glance — the compact circle above stays for the spin track. */
-.restaurant-card .card-photo,
-.restaurant-card .card-emoji{
-  width:76px; height:76px;
-  border-radius:var(--radius-md);
-}
-.restaurant-card .card-emoji svg{ width:28px; height:28px; }
+/* The persistent list uses a bigger, rounded-square thumbnail so rating/status/
+   price are easy to scan at a glance — the compact circle above stays for the
+   spin track. The icon tile is smaller than a photo would be: an icon needs
+   less room, and list photos are off by default (SHOW_LIST_PHOTOS). */
+.restaurant-card .card-photo{ width:76px; height:76px; border-radius:var(--radius-md); }
+.restaurant-card .card-emoji{ width:56px; height:56px; border-radius:16px; }
+.restaurant-card .card-emoji svg{ width:26px; height:26px; }
 .card-meta{ margin-top:2px; }
 .card-meta-sub{ margin-top:1px; }
 .card-rating-num{ color:var(--color-text); font-weight:700; }
@@ -206,16 +219,14 @@ h1,h2,h3,p{margin:0;}
 .card-rating-count{ color:var(--color-text-muted); font-weight:500; }
 .card-status-open{ color:#16a34a; font-weight:700; }
 .card-status-closed{ color:var(--color-text-muted); font-weight:600; }
-.card-features{ display:flex; flex-wrap:wrap; gap:var(--sp-1) var(--sp-3); margin-top:var(--sp-1); }
-.feature-badge{ font-size:.72rem; font-weight:600; }
-.feature-yes{ color:#16a34a; }
-.feature-no{ color:var(--color-text-muted); }
 .card-body{ min-width:0; flex:1; }
 .card-name{ font-weight:700; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .card-meta{ font-size:.78rem; color:var(--color-text-muted); font-weight:500; }
 .list-empty, .list-loading{
   padding:var(--sp-6) var(--sp-4); text-align:center; color:var(--color-text-muted); font-size:.85rem; font-weight:500;
 }
+.list-empty{ display:flex; flex-direction:column; align-items:center; gap:var(--sp-3); }
+.list-retry-btn{ flex:none; min-height:40px; padding:var(--sp-2) var(--sp-5); font-size:.85rem; }
 
 /* ---------- Spin button ---------- */
 .spin-btn{
@@ -291,7 +302,9 @@ h1,h2,h3,p{margin:0;}
   .list-panel{
     left:0; right:0; bottom:0;
     height:78vh;
+    height:78dvh;
     max-height:78vh;
+    max-height:78dvh;
     border-radius:var(--radius-lg) var(--radius-lg) 0 0;
     transform:translateY(calc(100% - 132px));
     transition:transform .35s var(--ease-out);
@@ -340,7 +353,6 @@ h1,h2,h3,p{margin:0;}
   display:flex; align-items:center; gap:var(--sp-3);
   padding:0 var(--sp-5);
 }
-.spin-card .card-emoji{ background:var(--color-accent-softer); }
 .spin-card .card-name{ font-size:1rem; }
 .spin-fade{
   position:absolute; left:0; right:0; height:72px; z-index:3; pointer-events:none;
@@ -359,14 +371,25 @@ h1,h2,h3,p{margin:0;}
   margin:0 auto;
   max-width:480px;
   max-height:88vh;
-  overflow-y:auto;
-  overflow-x:hidden;
-  -webkit-overflow-scrolling:touch;
+  max-height:88dvh;
+  display:flex; flex-direction:column;
+  overflow:hidden;
   background:var(--color-bg);
   border-radius:var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow:var(--shadow-lg);
-  padding:var(--sp-2) var(--sp-6) calc(var(--sp-6) + env(safe-area-inset-bottom));
   animation:sheet-bounce .5s var(--ease-bounce);
+}
+/* Only the details scroll; the action bar below stays pinned to the bottom
+   edge. With everything in one scroller, a photo plus long details pushed
+   "เริ่มเดินทาง" below the fold on a 375×812 phone. */
+.result-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:var(--sp-2) var(--sp-6) var(--sp-4);
 }
 @keyframes sheet-bounce{
   0%{ transform:translateY(100%); }
@@ -378,12 +401,32 @@ h1,h2,h3,p{margin:0;}
 }
 .sheet-handle{ display:flex; justify-content:center; padding:var(--sp-3) 0; }
 .sheet-handle span{ width:40px; height:5px; border-radius:var(--radius-full); background:var(--color-border); }
+.sheet-close{
+  position:absolute; top:var(--sp-3); right:var(--sp-3);
+  z-index:2;
+  width:36px; height:36px;
+}
+.result-photo-wrap{
+  position:relative;
+  margin:0 calc(-1 * var(--sp-6)) var(--sp-4);
+}
 .result-photo{
   display:block;
-  width:calc(100% + var(--sp-6) * 2);
+  width:100%;
   height:180px;
   object-fit:cover;
-  margin:0 calc(-1 * var(--sp-6)) var(--sp-4);
+  background:var(--color-accent-softer);
+}
+.result-photo-credit{
+  position:absolute; right:var(--sp-2); bottom:var(--sp-2);
+  max-width:70%;
+  padding:2px var(--sp-2);
+  border-radius:var(--radius-full);
+  background:rgba(43,35,32,.62);
+  color:#fff;
+  font-size:.68rem; font-weight:600;
+  text-decoration:none;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 .result-badge{
   display:inline-block;
@@ -400,18 +443,23 @@ h1,h2,h3,p{margin:0;}
 .result-distance{ margin-top:var(--sp-1); color:var(--color-text-muted); font-weight:600; font-size:.92rem; }
 .result-tel{ display:inline-block; margin-top:var(--sp-1); color:var(--color-accent-dark); font-weight:700; font-size:.88rem; text-decoration:none; }
 .result-tel:active{ opacity:.7; }
-.result-reviews{ margin-top:var(--sp-5); }
-.review-item{ padding:var(--sp-3) 0; border-top:1px solid var(--color-border); }
-.review-item:first-child{ padding-top:0; border-top:none; }
-.review-head{ display:flex; align-items:baseline; gap:var(--sp-2); }
-.review-author{ font-size:.82rem; font-weight:700; }
-.review-stars{ font-size:.7rem; color:var(--color-accent-dark); letter-spacing:1px; flex-shrink:0; }
-.review-text{
-  margin-top:var(--sp-1); font-size:.85rem; color:var(--color-text-muted); line-height:1.5;
-  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+.result-maps-link{
+  display:flex; align-items:center; gap:var(--sp-1);
+  width:fit-content;
+  margin-top:var(--sp-3);
+  color:var(--color-accent-dark);
+  font-weight:700; font-size:.88rem;
+  text-decoration:none;
 }
-.result-methods{ margin-top:var(--sp-5); }
-.result-actions{ display:flex; gap:var(--sp-3); margin-top:var(--sp-5); }
+.result-maps-link:active{ opacity:.7; }
+.result-methods{ margin-top:var(--sp-4); }
+.result-actions{
+  flex:none;
+  display:flex; gap:var(--sp-3);
+  padding:var(--sp-3) var(--sp-6) calc(var(--sp-4) + env(safe-area-inset-bottom));
+  border-top:1px solid var(--color-border);
+  background:var(--color-bg);
+}
 
 .btn{
   border:none; border-radius:var(--radius-full);
@@ -486,36 +534,6 @@ h1,h2,h3,p{margin:0;}
   animation:toast-in .25s var(--ease-out);
 }
 @keyframes toast-in{ from{ opacity:0; transform:translate(-50%,8px); } to{ opacity:1; transform:translate(-50%,0); } }
-
-/* ---------- Navigation bar ---------- */
-.nav-bar{
-  position:absolute;
-  top:calc(84px + env(safe-area-inset-top));
-  left:50%;
-  transform:translateX(-50%);
-  z-index:25;
-  display:flex;
-  align-items:center;
-  gap:var(--sp-3);
-  background:var(--color-bg);
-  padding:var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
-  border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-md);
-  max-width:92vw;
-}
-.nav-bar-info{ min-width:0; flex:1; }
-.nav-eta{ font-weight:800; font-size:1rem; color:var(--color-accent-dark); white-space:nowrap; }
-.nav-dest{
-  font-size:.78rem; color:var(--color-text-muted); font-weight:600;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.nav-end-btn{
-  flex:0 0 auto;
-  white-space:nowrap;
-  padding:var(--sp-2) var(--sp-4);
-  min-height:40px;
-  font-size:.82rem;
-}
 
 /* ---------- Map markers ---------- */
 .user-dot{

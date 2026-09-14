@@ -1,0 +1,14 @@
+{
+  "name": "HEWKAO — หิวข้าว วันนี้กินอะไรดี",
+  "short_name": "HEWKAO",
+  "description": "สุ่มร้านอาหารใกล้คุณ คิดไม่ออกว่าจะกินอะไร ให้ HEWKAO ช่วยสุ่มให้",
+  "lang": "th",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

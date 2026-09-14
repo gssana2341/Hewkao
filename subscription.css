@@ -38,4 +38,15 @@
 .plan-per{ font-size:.75rem; font-weight:600; color:var(--color-text-muted); }
 .plan-spins{ font-size:.85rem; font-weight:700; color:var(--color-accent-dark); margin-top:2px; }
 .plan-btn{ flex:0 0 auto; min-height:40px; padding:var(--sp-2) var(--sp-4); font-size:.85rem; }
-.paywall-note{ font-size:.72rem; color:var(--color-text-muted); text-align:center; margin-top:var(--sp-2); }
+.paywall-note{ font-size:.72rem; color:var(--color-text-muted); text-align:center; margin-top:var(--sp-2); margin-bottom:var(--sp-4); }
+
+/* Public-site version of the paywall (no demo checkout) */
+.paywall-soon{
+  margin:var(--sp-5) 0 var(--sp-4);
+  padding:var(--sp-4);
+  border-radius:var(--radius-md);
+  background:var(--color-accent-softer);
+  font-size:.88rem; line-height:1.6;
+}
+.paywall-soon-title{ font-weight:800; color:var(--color-accent-dark); margin-bottom:var(--sp-1); }
+.paywall-checkin-btn{ margin-bottom:var(--sp-3); }

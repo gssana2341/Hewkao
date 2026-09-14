@@ -80,9 +80,10 @@ function buildModal() {
   wrap.querySelector('#authBackBtn').addEventListener('click', showPhoneStep);
 
   wrap.querySelector('#authSendOtpBtn').addEventListener('click', () => {
-    const phone = phoneInput.value.trim();
-    if (!phone) {
-      showToast('กรอกเบอร์โทรศัพท์ให้ถูกต้อง');
+    const phone = phoneInput.value.replace(/\D/g, '');
+    // Thai mobile numbers: 10 digits starting with 06, 08 or 09.
+    if (!/^0[689]\d{8}$/.test(phone)) {
+      showToast('กรอกเบอร์มือถือ 10 หลัก เช่น 0812345678');
       return;
     }
     pendingPhone = phone;

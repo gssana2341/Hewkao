@@ -1,4 +1,4 @@
-import { FALLBACK_LATLNG, DEFAULT_RADIUS } from './constants.js';
+import { DEFAULT_RADIUS } from './constants.js';
 
 // Shared mutable app state. Kept as one plain object (not individual module
 // exports) because `let` bindings exported from ES modules can be imported
@@ -12,14 +12,12 @@ export const state = {
   currentMapStyle: 'light', // 'light' | 'satellite' | 'dark'
   markersById: new Map(),
   restaurants: [],
-  userLatLng: FALLBACK_LATLNG,
+  userLatLng: null, // [lat, lng], always set from geolocation before the app opens
   spinning: false,
   selected: null,
   selectedMethod: 'self',
+  recentPickIds: [], // newest first; the next spin skips these when it can
   tempDisliked: new Set(),
   tempRadius: DEFAULT_RADIUS,
   tempOpenNowOnly: false,
-  routeLayer: null,
-  navigating: false,
-  watchId: null,
 };

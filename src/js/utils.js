@@ -46,8 +46,3 @@ export function starRow(rating) {
   const full = Math.round(rating);
   return '★'.repeat(full) + '☆'.repeat(5 - full);
 }
-
-export function featureBadge(label, val) {
-  if (val == null) return '';
-  return `<span class="feature-badge ${val ? 'feature-yes' : 'feature-no'}">${val ? '✓' : '✕'} ${label}</span>`;
-}

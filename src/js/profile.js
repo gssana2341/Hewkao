@@ -1,13 +1,14 @@
 import { escapeHTML, showToast } from './utils.js';
+import { DEMO_MODE } from './constants.js';
 import { isLoggedIn as authIsLoggedIn, getPhone, openLoginModal, logout } from './auth.js';
 import { openPaywall, getTotalSpinsRemaining } from './subscription.js';
-import { maybeShow as maybeShowCheckin, hasClaimedToday, getStreak } from './checkin.js';
+import { open as openCheckin, hasClaimedToday, getStreak } from './checkin.js';
 
 /* =========================================================================
    HEWKAO — profile panel (top-right button).
 
-   Reads everything through auth's and subscription's public exports only —
-   this file owns no localStorage keys of its own.
+   Reads everything through auth's, subscription's and checkin's public
+   exports only — this file owns no localStorage keys of its own.
    ========================================================================= */
 
 function buildModal() {
@@ -44,45 +45,46 @@ function buildModal() {
       close();
       openPaywall();
     } else if (e.target.closest('#profileCheckinBtn')) {
+      // open(), not maybeShow(): the once-a-day guard made this button a
+      // no-op on any day the popup had already appeared.
       close();
-      maybeShowCheckin();
+      openCheckin();
     }
   });
 }
 
-function renderContent() {
-  const loggedIn = authIsLoggedIn();
-  const spins = getTotalSpinsRemaining();
-  const claimedToday = hasClaimedToday();
-  const streak = getStreak();
-
-  const loginSectionHTML = loggedIn
+function loginSectionHTML() {
+  // Phone login is a local simulation (any 6-digit code passes), so it only
+  // shows in demo mode — the public site shouldn't collect phone numbers
+  // until real OTP verification exists.
+  if (!DEMO_MODE) return '';
+  const body = authIsLoggedIn()
     ? `<p class="profile-phone">${escapeHTML(getPhone())}</p>
        <button id="profileLogoutBtn" type="button" class="btn btn-secondary btn-block">ออกจากระบบ</button>`
     : `<p class="profile-login-status">ยังไม่ได้เข้าสู่ระบบ</p>
        <button id="profileLoginBtn" type="button" class="btn btn-primary btn-block">เข้าสู่ระบบด้วยเบอร์มือถือ</button>`;
+  return `<div class="profile-section">${body}</div>`;
+}
+
+function renderContent() {
+  const spins = getTotalSpinsRemaining();
+  const claimedToday = hasClaimedToday();
 
   const checkinStatusHTML = claimedToday
-    ? `เช็คอินวันนี้แล้ว (Day ${streak}/7)`
+    ? `เช็คอินวันนี้แล้ว (Day ${getStreak()}/7)`
     : 'ยังไม่ได้เช็คอินวันนี้';
 
   document.getElementById('profileContent').innerHTML = `
-    <div class="profile-section">
-      ${loginSectionHTML}
-    </div>
+    ${loginSectionHTML()}
     <div class="profile-section profile-section-row">
       <span class="profile-label">สปินคงเหลือ</span>
       <span class="profile-spin-count">${spins}</span>
     </div>
     <div class="profile-section profile-section-row">
       <span class="profile-label">${checkinStatusHTML}</span>
-      <button id="profileCheckinBtn" type="button" class="btn btn-secondary profile-checkin-btn">เช็คอิน</button>
+      <button id="profileCheckinBtn" type="button" class="btn btn-secondary profile-checkin-btn">${claimedToday ? 'ดูสตรีค' : 'เช็คอิน'}</button>
     </div>
-    <button id="profileManageBtn" type="button" class="btn btn-secondary btn-block">จัดการแพ็ก</button>
-    <div class="profile-section">
-      <p class="profile-label">ประวัติการเติมเงิน</p>
-      <p class="profile-history-empty">ยังไม่มีประวัติ</p>
-    </div>
+    <button id="profileManageBtn" type="button" class="btn btn-secondary btn-block">${DEMO_MODE ? 'จัดการแพ็ก' : 'HEWKAO+'}</button>
     <p class="profile-privacy-link"><a href="/privacy.html" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a></p>`;
 }
 

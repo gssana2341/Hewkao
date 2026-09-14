@@ -1,6 +1,6 @@
 import { state } from './state.js';
-import { catOf } from './constants.js';
-import { escapeHTML, formatDistance, showToast, starRow, featureBadge } from './utils.js';
+import { catOf, LIST_COLLAPSED_KEY } from './constants.js';
+import { escapeHTML, formatDistance, starRow } from './utils.js';
 import { getDislikedSet, getOpenNowOnly } from './preferences.js';
 import { fetchNearby, processResults } from './places-api.js';
 import { renderMarkers } from './map.js';
@@ -12,26 +12,30 @@ const listToggleBtn = document.getElementById('listToggleBtn');
 const listCountEl = document.getElementById('listCount');
 const listEl = document.getElementById('restaurantList');
 const appEl = document.getElementById('app');
-const LIST_COLLAPSED_KEY = 'hewkao_list_collapsed';
+const spinBtn = document.getElementById('spinBtn');
 
 export function setListLoading() {
   listCountEl.textContent = 'กำลังค้นหา…';
   listEl.innerHTML = '<div class="list-loading">กำลังค้นหาร้านอาหารใกล้คุณ…</div>';
 }
 
-export function showListEmpty(msg) {
+export function showListEmpty(msg, { retry = false } = {}) {
   listCountEl.textContent = '0 ร้าน';
-  listEl.innerHTML = `<div class="list-empty">${escapeHTML(msg)}</div>`;
+  listEl.innerHTML = `<div class="list-empty">
+      <p>${escapeHTML(msg)}</p>
+      ${retry ? '<button type="button" class="btn btn-secondary list-retry-btn">ลองอีกครั้ง</button>' : ''}
+    </div>`;
+  listEl.querySelector('.list-retry-btn')?.addEventListener('click', loadNearby);
 }
 
 // Richer card for the persistent restaurant list, modeled closely on Google Maps'
-// own search-result rows — star rating, category, open/closed + price, and
-// dine-in/takeout/delivery badges, all visible at a glance (no need to tap in).
+// own search-result rows — star rating, category, open/closed + price, all
+// visible at a glance (no need to tap in).
 export function restaurantCardHTML(r) {
   const cat = catOf(r);
   const thumb = r.thumbUrl
     ? `<img class="card-photo" src="${r.thumbUrl}" alt="" loading="lazy">`
-    : `<div class="card-emoji" style="color:${cat.color}">${cat.icon}</div>`;
+    : `<div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>`;
 
   const ratingLine = r.rating
     ? `<div class="card-meta">
@@ -48,25 +52,18 @@ export function restaurantCardHTML(r) {
       : '';
   const priceBit = r.priceLabel ? ` · ${r.priceLabel}` : '';
 
-  const featuresHTML = [
-    featureBadge('นั่งทานที่ร้าน', r.dineIn),
-    featureBadge('สั่งกลับบ้าน', r.takeout),
-    featureBadge('เดลิเวอรี่', r.delivery),
-  ].filter(Boolean).join('');
-
   return `
     <div class="card-body">
       <div class="card-name">${escapeHTML(r.name)}</div>
       ${ratingLine}
       <div class="card-meta card-meta-sub">${cat.label}</div>
       <div class="card-meta card-meta-sub">${statusHTML}${formatDistance(r.distance)}${priceBit}</div>
-      ${featuresHTML ? `<div class="card-features">${featuresHTML}</div>` : ''}
     </div>
     ${thumb}`;
 }
 
-// Restaurants that match the saved filters — used for the list and map pins so
-// they show exactly what the user asked to see, not just the random-pick pool.
+// Restaurants that match the saved filters — used for the list, the map pins
+// and the random pool, so all three always agree on what's in play.
 export function getVisibleRestaurants() {
   const disliked = getDislikedSet();
   let list = state.restaurants.filter(r => !disliked.has(r.category));
@@ -100,24 +97,24 @@ export function renderList() {
   });
 }
 
-const spinBtn = document.getElementById('spinBtn');
-
 export async function loadNearby() {
   setListLoading();
   spinBtn.disabled = true;
+  state.recentPickIds = [];
   try {
     const results = await fetchNearby(state.userLatLng[0], state.userLatLng[1]);
     state.restaurants = processResults(results, state.userLatLng);
-    renderList();
-    renderMarkers();
-    if (!state.restaurants.length) {
-      showListEmpty('ไม่พบร้านอาหารใกล้คุณ ลองรีเฟรชหน้าใหม่อีกครั้ง');
-    } else {
-      spinBtn.disabled = false;
-    }
   } catch (err) {
-    showListEmpty('โหลดร้านอาหารไม่สำเร็จ ลองรีเฟรชหน้าใหม่อีกครั้ง');
-    showToast('เชื่อมต่อไม่สำเร็จ ลองใหม่อีกครั้ง');
+    console.warn('[HEWKAO] nearby search failed:', err);
+    showListEmpty('โหลดร้านอาหารไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง', { retry: true });
+    return;
+  }
+  renderList();
+  renderMarkers();
+  if (!state.restaurants.length) {
+    showListEmpty('ไม่พบร้านอาหารในระยะที่ตั้งไว้ ลองเพิ่มระยะค้นหาในการตั้งค่า');
+  } else {
+    spinBtn.disabled = false;
   }
 }
 
@@ -164,6 +161,15 @@ function endDrag(e) {
 }
 listHandle.addEventListener('pointerup', endDrag);
 listHandle.addEventListener('pointercancel', endDrag);
+
+// The resting transform above is a pixel value from the panel's height at the
+// time, so rotating the phone or the browser toolbar resizing makes it stale.
+window.addEventListener('resize', () => {
+  if (dragging || !listPanel.style.transform) return;
+  if (!isMobile()) { listPanel.style.transform = ''; return; }
+  panelH = listPanel.getBoundingClientRect().height;
+  listPanel.style.transform = `translateY(${listPanel.classList.contains('expanded') ? 0 : collapsedTranslate()}px)`;
+});
 
 /* ---------- Sidebar collapse (desktop, full-screen map) ---------- */
 export function setListCollapsed(collapsed) {
