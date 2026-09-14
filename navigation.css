@@ -17,7 +17,13 @@
 }
 
 /* ---------- MapLibre map ---------- */
-.nav-map {
+/* #navOverlay (not just .nav-map) so this reliably beats MapLibre's own
+   `.maplibregl-map{position:relative}` base style — this file loads eagerly
+   in index.html's <head> while MapLibre's CSS only loads later, inside the
+   lazy navigation chunk, so on an equal-specificity single-class selector
+   MapLibre's rule would win the cascade and the map would collapse to 0
+   height on mobile (no @media override there to save it, unlike ≥900px). */
+#navOverlay .nav-map {
   position: absolute;
   inset: 0;
   z-index: 1;
@@ -362,7 +368,7 @@
   }
 
   /* ---- Map fills remaining space ---- */
-  .nav-map {
+  #navOverlay .nav-map {
     position: relative;
     flex: 1;
     inset: auto;
