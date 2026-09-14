@@ -19,12 +19,16 @@ import { initMap } from './js/map.js';
 import { loadNearby } from './js/restaurant-list.js';
 import { trackEvent } from './js/analytics.js';
 
+const landing = document.getElementById('landing');
 const splash = document.getElementById('splash');
 const splashSub = document.getElementById('splashSub');
 const splashRetryBtn = document.getElementById('splashRetryBtn');
 const appEl = document.getElementById('app');
 
 const SLOW_LOCATION_HINT_MS = 15000;
+// Set once a location fix succeeds so the next visit can skip the landing page.
+// The inline script in index.html reads this same key before first paint.
+const LOCATION_OK_KEY = 'hewkao_location_ok';
 
 /* ---------- Geolocation ---------- */
 // No hand-rolled race timer here: the API's own `timeout` only starts counting
@@ -99,11 +103,13 @@ async function tryGetLocation() {
     const pos = await getPosition();
     if (entered) return;
     state.userLatLng = [pos.coords.latitude, pos.coords.longitude];
+    localStorage.setItem(LOCATION_OK_KEY, '1');
     trackEvent('location_granted');
     await enterApp();
   } catch (err) {
     if (entered) return;
     console.warn('[HEWKAO] geolocation failed:', err);
+    if (err?.code === 1) localStorage.removeItem(LOCATION_OK_KEY);
     showSplashError(explainLocationError(err));
     trackEvent('location_denied', { reason: err?.code ? `code_${err.code}` : (err?.message || 'unknown') });
   } finally {
@@ -113,4 +119,41 @@ async function tryGetLocation() {
 }
 splashRetryBtn.addEventListener('click', tryGetLocation);
 
-tryGetLocation();
+// Location is only ever requested from a tap on a start button (or for a
+// returning visitor who already allowed it) — never on page load. That keeps
+// the landing content readable for first-time visitors and search engines,
+// and browsers treat unprompted location requests as spammy.
+function startApp() {
+  document.documentElement.classList.remove('returning');
+  landing.hidden = true;
+  splash.hidden = false;
+  tryGetLocation();
+}
+
+document.querySelectorAll('[data-start]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    trackEvent('start_clicked');
+    startApp();
+  });
+});
+
+// The returning flag only says location worked last time; the permission may
+// have been revoked since. Auto-start only while the browser still reports it
+// as granted, otherwise fall back to the landing page.
+async function boot() {
+  if (!document.documentElement.classList.contains('returning')) return;
+  let granted = false;
+  try {
+    granted = (await navigator.permissions?.query({ name: 'geolocation' }))?.state === 'granted';
+  } catch {
+    // Permissions API unsupported for geolocation: treat as not granted.
+  }
+  if (granted) {
+    startApp();
+  } else {
+    document.documentElement.classList.remove('returning');
+    localStorage.removeItem(LOCATION_OK_KEY);
+  }
+}
+
+boot();

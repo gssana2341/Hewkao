@@ -3,9 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>HEWKAO — หิวข้าว วันนี้กินอะไรดี</title>
-<meta name="description" content="สุ่มร้านอาหารใกล้คุณ คิดไม่ออกว่าจะกินอะไร ให้ HEWKAO ช่วยสุ่มให้">
+<title>วันนี้กินอะไรดี? สุ่มร้านอาหารใกล้คุณ | HEWKAO หิวข้าว</title>
+<meta name="description" content="คิดไม่ออกว่าจะกินอะไร? HEWKAO สุ่มร้านอาหารใกล้คุณให้ในไม่กี่วินาที กรองร้านที่เปิดอยู่ ตัดประเภทที่ไม่ชอบ แล้วนำทางด้วย Google Maps หรือสั่งเดลิเวอรี่ต่อได้ทันที ใช้ฟรี">
 <meta name="theme-color" content="#ffffff">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HEWKAO",
+  "alternateName": "หิวข้าว",
+  "description": "สุ่มร้านอาหารใกล้คุณ สำหรับคนที่คิดไม่ออกว่าวันนี้จะกินอะไร",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Any",
+  "inLanguage": "th",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "THB" }
+}
+</script>
+<script>
+  // Returning visitors whose last location request succeeded skip the landing
+  // page. Runs before first paint so the landing never flashes; main.js then
+  // confirms the permission is still granted (key: LOCATION_OK_KEY in main.js).
+  try { if (localStorage.getItem('hewkao_location_ok') === '1') document.documentElement.classList.add('returning'); } catch (e) {}
+</script>
 <link rel="icon" href="/icons/favicon-96.png" sizes="96x96" type="image/png">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -17,11 +37,100 @@
 <link rel="stylesheet" href="auth.css">
 <link rel="stylesheet" href="profile.css">
 <link rel="stylesheet" href="checkin.css">
+<link rel="stylesheet" href="landing.css">
 </head>
 <body>
 
+<!-- 0. Landing: what first-time visitors and search engines see -->
+<main id="landing" class="landing">
+  <header class="landing-top">
+    <img src="assets/logo-horizontal.png" alt="HEWKAO" class="landing-logo" width="76" height="28">
+    <a class="landing-top-link" href="#faq">คำถามที่พบบ่อย</a>
+  </header>
+
+  <section class="landing-hero">
+    <div>
+      <p class="landing-eyebrow">หิวข้าว แต่คิดไม่ออก?</p>
+      <h1>วันนี้กินอะไรดี?<br><span>ให้ HEWKAO สุ่มให้</span></h1>
+      <p class="landing-lede">กดปุ่มเดียว HEWKAO สุ่มร้านอาหารที่อยู่ใกล้คุณจริงๆ พร้อมเรตติ้ง ระยะทาง และบอกว่าร้านเปิดอยู่ไหม แล้วกดนำทางด้วย Google Maps หรือสั่งผ่าน LINE MAN / ShopeeFood ต่อได้เลย</p>
+      <div class="landing-cta">
+        <button type="button" class="btn btn-primary landing-start-btn" data-start>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="4"/>
+            <circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+            <circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          สุ่มร้านใกล้ฉัน
+        </button>
+        <p class="landing-cta-note">ใช้ฟรี ไม่ต้องสมัคร · ต้องอนุญาตตำแหน่งเพื่อหาร้านใกล้คุณ</p>
+      </div>
+    </div>
+    <div class="landing-slot" aria-hidden="true">
+      <div class="landing-slot-window">
+        <div class="landing-slot-reel">
+          <span>ข้าวมันไก่</span><span>ส้มตำ</span><span>ราเมน</span><span>หมูกระทะ</span><span>กะเพราไข่ดาว</span><span>ข้าวมันไก่</span>
+        </div>
+      </div>
+      <p class="landing-slot-caption">ร้านจริงจาก Google Maps รอบตัวคุณ</p>
+    </div>
+  </section>
+
+  <section class="landing-section" aria-labelledby="howTitle">
+    <h2 id="howTitle">ใช้ยังไง</h2>
+    <ol class="landing-steps">
+      <li><b>อนุญาตตำแหน่ง</b><span>HEWKAO ใช้ตำแหน่งตอนนั้นเพื่อหาร้านรอบตัว ไม่เก็บไว้บนเซิร์ฟเวอร์</span></li>
+      <li><b>กดสุ่ม</b><span>วงล้อหมุนเลือกให้ 1 ร้าน ไม่ถูกใจก็กดสุ่มใหม่ ไม่ได้ร้านเดิมซ้ำ</span></li>
+      <li><b>ไปกินเลย</b><span>กดนำทางด้วย Google Maps หรือสั่งเดลิเวอรี่ต่อได้ทันที</span></li>
+    </ol>
+  </section>
+
+  <section class="landing-section" aria-labelledby="featuresTitle">
+    <h2 id="featuresTitle">สุ่มแบบไม่มั่ว</h2>
+    <ul class="landing-features">
+      <li><b>ตัดของที่ไม่อยากกิน</b>ไม่เอาญี่ปุ่น ไม่เอาทะเล ติ๊กออกได้ ร้านพวกนั้นจะไม่โผล่มาในวงล้อ</li>
+      <li><b>เฉพาะร้านที่เปิดอยู่</b>เปิดตัวกรองนี้ไว้ จะได้ไม่ต้องไปเจอร้านปิด</li>
+      <li><b>เลือกระยะได้</b>ตั้งแต่ 1 ถึง 5 กม. หิวมากก็เอาแค่ใกล้ๆ</li>
+      <li><b>ร้านเล็กก็มีสิทธิ์</b>ไม่ใช่แค่ร้านดัง ร้านข้าวแกงหน้าปากซอยก็ถูกสุ่มได้เหมือนกัน</li>
+    </ul>
+  </section>
+
+  <section class="landing-section" id="faq" aria-labelledby="faqTitle">
+    <h2 id="faqTitle">คำถามที่พบบ่อย</h2>
+    <details>
+      <summary>HEWKAO ใช้ฟรีไหม</summary>
+      <p>ใช้ฟรี ไม่ต้องสมัครสมาชิก สุ่มฟรีวันละ 5 ครั้ง เช็คอินทุกวันรับสปินเพิ่ม และกดดูร้านจากรายการได้ไม่จำกัด</p>
+    </details>
+    <details>
+      <summary>ทำไมต้องขอตำแหน่ง</summary>
+      <p>เพื่อหาร้านที่อยู่ใกล้คุณจริงๆ ตำแหน่งถูกใช้ค้นหาร้านกับ Google Maps ตอนนั้นเท่านั้น เราไม่เก็บไว้บนเซิร์ฟเวอร์</p>
+    </details>
+    <details>
+      <summary>ข้อมูลร้านมาจากไหน</summary>
+      <p>ชื่อร้าน เรตติ้ง เวลาเปิด-ปิด และรูป มาจาก Google Maps โดยตรง ข้อมูลจึงเป็นปัจจุบันตามที่ร้านและผู้ใช้ Google อัปเดต</p>
+    </details>
+    <details>
+      <summary>อนุญาตตำแหน่งแล้ว แต่หาร้านไม่เจอ</summary>
+      <p>ลองเพิ่มระยะค้นหาในหน้าตั้งค่า หรือปิดตัวกรอง "เฉพาะร้านที่เปิดอยู่" ถ้าเบราว์เซอร์บล็อกตำแหน่งไว้ ให้เปิดสิทธิ์ตำแหน่งของเว็บนี้ในการตั้งค่าเบราว์เซอร์ก่อน</p>
+    </details>
+  </section>
+
+  <section class="landing-section landing-closing" aria-labelledby="closingTitle">
+    <h2 id="closingTitle">หิวแล้วใช่ไหม</h2>
+    <button type="button" class="btn btn-primary landing-start-btn" data-start>สุ่มร้านใกล้ฉัน</button>
+    <p class="landing-cta-note">ใช้เวลาไม่ถึงนาที</p>
+  </section>
+
+  <footer class="landing-footer">
+    <p>© HEWKAO หิวข้าว</p>
+    <a href="/privacy.html">นโยบายความเป็นส่วนตัว</a>
+  </footer>
+</main>
+
 <!-- 1. Splash -->
-<div id="splash" class="splash">
+<div id="splash" class="splash" hidden>
   <img src="assets/logo-full.png" alt="HEWKAO" class="splash-logo" width="200" height="183">
   <p class="splash-text">จะกินอะไรดี คิดไม่ออก?</p>
   <p class="splash-sub" id="splashSub">กำลังค้นหาตำแหน่งของคุณ…</p>
