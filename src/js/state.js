@@ -20,4 +20,9 @@ export const state = {
   tempDisliked: new Set(),
   tempRadius: DEFAULT_RADIUS,
   tempOpenNowOnly: false,
+  // Navigation Mode
+  navigating: false,
+  navRoute: null,       // current OSRM route object
+  navDestination: null,  // restaurant being navigated to
+  navWatchId: null,      // geolocation watchPosition id
 };

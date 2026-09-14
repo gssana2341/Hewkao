@@ -1,0 +1,405 @@
+/* ==========================================================================
+   Navigation Mode — full-screen overlay shown while navigating to a
+   restaurant. Sits above the regular Google Maps app shell. Renders with
+   MapLibre GL JS + OpenFreeMap (free for commercial use, no API key) — a
+   separate map from the Google one that powers restaurant search, so no
+   extra Google billing for turn-by-turn tile views.
+   ========================================================================== */
+
+/* ---------- Overlay container ---------- */
+.nav-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95; /* above the app (z:1-20), below splash (z:100) */
+  display: flex;
+  flex-direction: column;
+  background: #1a1a2e;
+}
+
+/* ---------- MapLibre map ---------- */
+.nav-map {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.nav-map .maplibregl-ctrl-top-right { top: calc(84px + env(safe-area-inset-top)); }
+
+/* ---------- User dot ---------- */
+.nav-user-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #4285f4;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 5px rgba(66, 133, 244, 0.25), 0 2px 8px rgba(0,0,0,.3);
+  transition: transform 0.3s ease;
+}
+
+/* Heading indicator: a small triangle above the dot */
+.nav-user-dot::after {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #4285f4;
+}
+
+/* ---------- Destination marker (premium style) ---------- */
+.nav-dest-marker {
+  /* Reset Leaflet's default divIcon styles */
+  background: none !important;
+  border: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-dest-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff5a36, #e14a29);
+  border: 3px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 12px rgba(225, 74, 41, 0.4), 0 1px 4px rgba(0,0,0,.2);
+  z-index: 2;
+}
+.nav-dest-dot svg {
+  display: block;
+}
+
+.nav-dest-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 90, 54, 0.2);
+  animation: nav-dest-pulse 2s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes nav-dest-pulse {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+}
+
+/* Tooltip (restaurant name label) */
+.nav-dest-tooltip {
+  background: #2b2320;
+  color: #fff;
+  border: none !important;
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-family: 'Noto Sans Thai', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-dest-tooltip::before {
+  border-top-color: #2b2320 !important;
+}
+
+/* ---------- Instruction bar (top) ---------- */
+.nav-instruction-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: calc(16px + env(safe-area-inset-top)) 20px 18px;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
+}
+
+.nav-maneuver-icon {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.18);
+  border-radius: 16px;
+  color: #fff;
+}
+.nav-maneuver-icon svg {
+  display: block;
+}
+
+.nav-instruction-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-instruction-dist {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.nav-instruction-detail {
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0.9;
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Bottom bar (ETA + stop) ---------- */
+.nav-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  background: #fff;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,.1);
+}
+
+.nav-eta {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-eta-time {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #16a34a;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.nav-eta-dist {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #8a8078;
+  margin: 2px 0 0;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 24px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  min-height: 50px;
+  flex-shrink: 0;
+  transition: transform 0.15s cubic-bezier(.22,1,.36,1), opacity 0.15s;
+  font-family: 'Noto Sans Thai', sans-serif;
+}
+.btn-danger:active {
+  transform: scale(0.95);
+}
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* ---------- Arrival overlay ---------- */
+.nav-arrival-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(22, 163, 74, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  text-align: center;
+  padding: 32px;
+  animation: nav-arrival-in 0.5s cubic-bezier(.34,1.56,.64,1);
+}
+
+@keyframes nav-arrival-in {
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.nav-arrival-icon {
+  font-size: 4rem;
+  line-height: 1;
+  animation: nav-arrival-bounce 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes nav-arrival-bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+.nav-arrival-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.nav-arrival-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* ---------- Hide main app chrome while navigating ---------- */
+.app.nav-active .top-bar,
+.app.nav-active .map-controls,
+.app.nav-active .list-panel,
+.app.nav-active .list-toggle-btn {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Desktop / Tablet layout (≥ 900px)
+   On wide screens the instruction & ETA bars become a side panel on the left
+   so the map fills the remaining space — like Google Maps desktop navigation.
+   ========================================================================== */
+@media (min-width: 900px) {
+  .nav-overlay {
+    flex-direction: row;
+  }
+
+  /* ---- Side panel: instruction + ETA stacked vertically ---- */
+  .nav-instruction-bar {
+    position: relative;
+    top: auto; left: auto; right: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 360px;
+    flex-shrink: 0;
+    z-index: 10;
+    gap: 12px;
+    padding: 32px 28px 20px;
+    border-radius: 0;
+    box-shadow: 4px 0 24px rgba(0,0,0,.15);
+    order: -1;
+  }
+
+  .nav-maneuver-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+  }
+  .nav-maneuver-icon svg {
+    width: 38px;
+    height: 38px;
+  }
+
+  .nav-instruction-dist {
+    font-size: 2.2rem;
+  }
+
+  .nav-instruction-detail {
+    font-size: 1.1rem;
+    white-space: normal;
+  }
+
+  /* ---- Bottom bar becomes part of the side panel ---- */
+  .nav-bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 360px;
+    border-radius: 0;
+    box-shadow: 0 -1px 0 #f0e8e3;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 20px 28px 28px;
+  }
+
+  .nav-eta {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .nav-eta-time {
+    font-size: 1.8rem;
+  }
+
+  .nav-eta-dist {
+    font-size: 0.95rem;
+  }
+
+  .btn-danger {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+  }
+
+  /* ---- Map fills remaining space ---- */
+  .nav-map {
+    position: relative;
+    flex: 1;
+    inset: auto;
+    height: 100%;
+  }
+
+  /* ---- Arrival overlay stays full-screen ---- */
+  .nav-arrival-overlay {
+    left: 0;
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Medium screens (600–899px) — floating bars, wider than mobile
+   ========================================================================== */
+@media (min-width: 600px) and (max-width: 899.9px) {
+  .nav-instruction-bar {
+    max-width: 520px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    border-radius: 0 0 20px 20px;
+    top: 0;
+  }
+  .nav-bottom-bar {
+    max-width: 520px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .nav-arrival-overlay { animation: none; }
+  .nav-arrival-icon { animation: none; }
+  .nav-dest-ring { animation: none; }
+}

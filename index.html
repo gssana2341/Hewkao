@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="profile.css">
 <link rel="stylesheet" href="checkin.css">
 <link rel="stylesheet" href="landing.css">
+<link rel="stylesheet" href="navigation.css">
 </head>
 <body>
 
@@ -250,6 +251,38 @@
   <div class="result-actions">
     <button id="respinBtn" type="button" class="btn btn-secondary">สุ่มใหม่</button>
     <button id="goBtn" type="button" class="btn btn-primary">เริ่มเดินทาง</button>
+  </div>
+</div>
+
+<!-- 6. Navigation Mode overlay -->
+<div id="navOverlay" class="nav-overlay" hidden>
+  <div id="navMap" class="nav-map"></div>
+
+  <!-- Turn-by-turn instruction bar (top) -->
+  <div id="navInstructionBar" class="nav-instruction-bar">
+    <div id="navManeuverIcon" class="nav-maneuver-icon">
+      <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+    </div>
+    <div class="nav-instruction-text">
+      <p id="navInstructionDistance" class="nav-instruction-dist">—</p>
+      <p id="navInstructionText" class="nav-instruction-detail">กำลังคำนวณเส้นทาง…</p>
+    </div>
+  </div>
+
+  <!-- ETA + stop button (bottom) -->
+  <div class="nav-bottom-bar">
+    <div class="nav-eta">
+      <p id="navEta" class="nav-eta-time">—</p>
+      <p id="navRemaining" class="nav-eta-dist">—</p>
+    </div>
+    <button id="navStopBtn" type="button" class="btn-danger nav-stop-btn">จบนำทาง</button>
+  </div>
+
+  <!-- Arrival celebration -->
+  <div id="navArrivalOverlay" class="nav-arrival-overlay" hidden>
+    <div class="nav-arrival-icon">🎉</div>
+    <p class="nav-arrival-title">ถึงแล้ว!</p>
+    <p id="navArrivalName" class="nav-arrival-name">ชื่อร้าน</p>
   </div>
 </div>
 

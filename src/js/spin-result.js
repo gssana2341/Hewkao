@@ -145,10 +145,12 @@ function deliverySearchUrl(methodId, r) {
   return `https://www.google.com/search?q=${encodeURIComponent(`${r.name} ${platform}`)}`;
 }
 
-// Hands turn-by-turn directions to Google Maps (the app on phones, a new tab on
-// desktop) instead of drawing our own route. It's free, needs no API key, and
-// replaces the public OSRM demo server, whose policy forbids commercial use.
-function directionsUrl(r) {
+// Opens turn-by-turn directions in Google Maps itself (the app on phones, a
+// new tab on desktop). Free, no API key. In-app navigation (navigation.js)
+// is the default for "เริ่มเดินทาง"; this is its fallback when that route
+// computation fails, so a bad request never strands the user with no way
+// to get directions at all.
+export function directionsUrl(r) {
   const params = new URLSearchParams({ api: '1', destination: `${r.lat},${r.lng}`, destination_place_id: r.id });
   return `https://www.google.com/maps/dir/?${params}`;
 }
@@ -264,10 +266,19 @@ resultBackdrop.addEventListener('click', closeResult);
 resultCloseBtn.addEventListener('click', closeResult);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeResult(); });
 respinBtn.addEventListener('click', () => { hideResult(); spin(); });
-goBtn.addEventListener('click', () => {
+
+goBtn.addEventListener('click', async () => {
   const r = state.selected;
   if (!r) return;
   trackEvent('go_clicked', { method: state.selectedMethod, category: r.category });
-  const url = state.selectedMethod === 'self' ? directionsUrl(r) : deliverySearchUrl(state.selectedMethod, r);
-  window.open(url, '_blank', 'noopener');
+  if (state.selectedMethod === 'self') {
+    // Dynamic: this is what keeps MapLibre GL JS out of everyone's initial
+    // download (see the comment in main.js) — loaded on first use, then
+    // cached by the browser for the rest of the visit.
+    const { startNavigation } = await import('./navigation.js');
+    startNavigation(r);
+  } else {
+    const url = deliverySearchUrl(state.selectedMethod, r);
+    window.open(url, '_blank', 'noopener');
+  }
 });

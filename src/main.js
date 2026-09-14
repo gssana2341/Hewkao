@@ -13,6 +13,9 @@ import './js/preferences.js';
 import './js/map.js';
 import './js/restaurant-list.js';
 import './js/spin-result.js';
+// navigation.js is NOT imported here — it pulls in MapLibre GL JS (~300 KB
+// gzipped), so spin-result.js loads it dynamically only once someone
+// actually taps "เริ่มเดินทาง", instead of everyone paying for it upfront.
 
 import { state } from './js/state.js';
 import { initMap } from './js/map.js';
