@@ -40,6 +40,7 @@ const navInstructionDist = document.getElementById('navInstructionDistance');
 const navEtaTime = document.getElementById('navEta');
 const navRemaining = document.getElementById('navRemaining');
 const navStopBtn = document.getElementById('navStopBtn');
+const navBackBtn = document.getElementById('navBackBtn');
 const navArrivalOverlay = document.getElementById('navArrivalOverlay');
 const navArrivalName = document.getElementById('navArrivalName');
 
@@ -197,6 +198,9 @@ export function destroyNavMap() {
 }
 
 // Lazy import to break the circular dependency (navigation.js ↔ nav-map.js).
-navStopBtn.addEventListener('click', () => {
-  import('./navigation.js').then(m => m.stopNavigation());
-});
+// Two exits, same action: the bottom "จบนำทาง" button reads clearly as a
+// control; navBackBtn covers the top-left corner where people instinctively
+// tap expecting to leave a full-screen view, regardless of the icon there.
+const stopClickHandler = () => { import('./navigation.js').then(m => m.stopNavigation()); };
+navStopBtn.addEventListener('click', stopClickHandler);
+navBackBtn.addEventListener('click', stopClickHandler);

@@ -139,6 +139,30 @@
   box-shadow: 0 4px 24px rgba(0,0,0,.3);
 }
 
+/* A real, tappable exit control — distinct from .nav-maneuver-icon below,
+   which only ever displays the upcoming turn direction and isn't a button.
+   Both sit top-left in a rounded badge, and a maneuver that happens to be a
+   left turn renders as a left-pointing arrow there too — near-identical to
+   this button at a glance, so this one uses a plain single-chevron glyph
+   (vs. the maneuver icons' line+chevron pairs) and its own hover/active
+   states to read as the interactive one. */
+.nav-back-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.18);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: background .15s, transform .15s;
+}
+.nav-back-btn:hover { background: rgba(255,255,255,.28); }
+.nav-back-btn:active { background: rgba(255,255,255,.34); transform: scale(.92); }
+
 .nav-maneuver-icon {
   flex-shrink: 0;
   width: 52px;
@@ -312,6 +336,11 @@
     border-radius: 0;
     box-shadow: 4px 0 24px rgba(0,0,0,.15);
     order: -1;
+  }
+
+  .nav-back-btn {
+    width: 44px;
+    height: 44px;
   }
 
   .nav-maneuver-icon {
