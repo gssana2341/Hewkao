@@ -81,11 +81,20 @@ function manageSpinsLabel(remaining) {
 }
 
 /* ---------- Badge on the spin button ---------- */
+// A ticket icon, not just a bare number: a floating "5" on its own doesn't
+// say what it's counting, especially once credits (check-in streaks, bought
+// packs) push it well past a single digit. Capped at 99+ too — an
+// uncapped count from repeated testing/top-ups reads as a broken counter,
+// not a big number.
+const BADGE_ICON = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1a2 2 0 0 0 0 4v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1a2 2 0 0 0 0-4z"/></svg>';
+const BADGE_MAX_DISPLAY = 99;
+
 export function updateBadge() {
   const remaining = getTotalSpinsRemaining();
   const badge = document.getElementById('spinCountBadge');
   if (badge) {
-    badge.textContent = remaining;
+    const count = badge.querySelector('.spin-count-badge-num');
+    if (count) count.textContent = remaining > BADGE_MAX_DISPLAY ? `${BADGE_MAX_DISPLAY}+` : remaining;
     badge.classList.toggle('spin-count-empty', remaining === 0);
   }
   const manageBtn = document.getElementById('manageSpinsBtn');
@@ -99,6 +108,7 @@ function injectBadge() {
   badge.id = 'spinCountBadge';
   badge.className = 'spin-count-badge';
   badge.title = 'จำนวนครั้งสุ่มที่เหลือวันนี้ — กดเพื่อดูรายละเอียด';
+  badge.innerHTML = `${BADGE_ICON}<span class="spin-count-badge-num"></span>`;
   badge.addEventListener('click', e => {
     e.stopPropagation();
     openPaywall();
