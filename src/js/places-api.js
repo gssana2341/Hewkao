@@ -135,6 +135,19 @@ function absoluteUrl(uri) {
   return uri.startsWith('//') ? `https:${uri}` : uri;
 }
 
+// Shops Google knows little about (no photo, hardly any reviews, unknown
+// hours, only a generic category) go below the rest of the list, nearest
+// first within each group. They stay on the map and in the random pool —
+// small shops getting a fair chance is the point — they just don't lead the
+// list ahead of shops a user can actually judge before going.
+const SPARSE_INFO_SCORE = 3; // out of 6
+function infoScore(r) {
+  return (r.photoName ? 2 : 0)
+    + (r.ratingCount >= 5 ? 2 : r.ratingCount >= 1 ? 1 : 0)
+    + (r.openNow !== null ? 1 : 0)
+    + (r.category !== 'other' ? 1 : 0);
+}
+
 export function processResults(places, [uLat, uLng]) {
   const list = places
     .filter(p => p.displayName?.text && p.location && !EXCLUDED_PRIMARY_TYPE_SET.has(p.primaryType))
@@ -160,7 +173,8 @@ export function processResults(places, [uLat, uLng]) {
         openNow: p.currentOpeningHours?.openNow ?? null,
         distance: haversine(uLat, uLng, p.location.latitude, p.location.longitude),
       };
-    });
-  list.sort((a, b) => a.distance - b.distance);
+    })
+    .map(r => ({ ...r, sparse: infoScore(r) < SPARSE_INFO_SCORE }));
+  list.sort((a, b) => (a.sparse - b.sparse) || (a.distance - b.distance));
   return list;
 }

@@ -132,9 +132,14 @@ export function renderList() {
     return;
   }
   listCountEl.textContent = `${visible.length} ร้าน`;
-  listEl.innerHTML = visible.map(r =>
-    `<button type="button" class="restaurant-card" data-id="${r.id}">${restaurantCardHTML(r)}</button>`
-  ).join('');
+  // Low-info shops are sorted last (see processResults); a label where that
+  // group starts keeps a nearer shop appearing lower from reading as a bug.
+  listEl.innerHTML = visible.map((r, i) => {
+    const divider = i > 0 && r.sparse && !visible[i - 1].sparse
+      ? '<p class="list-divider">ร้านอื่นๆ ที่ข้อมูลใน Google ยังน้อย</p>'
+      : '';
+    return `${divider}<button type="button" class="restaurant-card" data-id="${r.id}">${restaurantCardHTML(r)}</button>`;
+  }).join('');
   listEl.querySelectorAll('.restaurant-card').forEach(btn => {
     btn.addEventListener('click', () => {
       const r = state.restaurants.find(x => x.id === btn.dataset.id);
