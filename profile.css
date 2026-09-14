@@ -1,0 +1,14 @@
+/* ---------- Profile panel ---------- */
+.profile-modal{ max-width:380px; }
+.profile-section{ margin-top:var(--sp-5); }
+.profile-section:first-of-type{ margin-top:var(--sp-4); }
+.profile-section-row{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); }
+.profile-login-status{ color:var(--color-text-muted); font-weight:600; font-size:.9rem; margin-bottom:var(--sp-3); }
+.profile-phone{ font-weight:800; font-size:1.05rem; margin-bottom:var(--sp-3); }
+.profile-label{ font-size:.85rem; font-weight:700; color:var(--color-text-muted); }
+.profile-spin-count{ font-size:1.2rem; font-weight:800; color:var(--color-accent-dark); }
+.profile-checkin-btn{ flex:none; min-height:36px; padding:var(--sp-1) var(--sp-4); font-size:.82rem; }
+.profile-history-empty{ font-size:.85rem; color:var(--color-text-muted); margin-top:var(--sp-1); }
+#profileManageBtn{ margin-top:var(--sp-5); }
+.profile-privacy-link{ text-align:center; margin-top:var(--sp-5); font-size:.78rem; }
+.profile-privacy-link a{ color:var(--color-text-muted); }

@@ -1,0 +1,19 @@
+/* ---------- Phone login modal ---------- */
+.auth-modal{ max-width:380px; }
+.auth-step{ margin-top:var(--sp-2); }
+.auth-input{
+  display:block;
+  width:100%;
+  margin-top:var(--sp-3);
+  padding:var(--sp-3) var(--sp-4);
+  font-size:1rem;
+  font-family:inherit;
+  color:var(--color-text);
+  background:var(--color-bg);
+  border:1.5px solid var(--color-border);
+  border-radius:var(--radius-md);
+  transition:border-color .15s var(--ease-out);
+}
+.auth-input:focus{ outline:none; border-color:var(--color-accent); }
+.auth-otp-input{ letter-spacing:.3em; text-align:center; font-weight:700; }
+.auth-note{ font-size:.72rem; color:var(--color-text-muted); text-align:center; margin-top:var(--sp-2); }

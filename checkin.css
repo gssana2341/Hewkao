@@ -1,0 +1,36 @@
+/* ---------- Daily check-in modal ---------- */
+.checkin-modal{ max-width:420px; }
+.checkin-strip{
+  display:flex; gap:var(--sp-2);
+  margin:var(--sp-5) 0;
+  overflow-x:auto;
+  padding-bottom:var(--sp-1);
+}
+.checkin-pip{
+  flex:1 0 auto;
+  min-width:56px;
+  display:flex; flex-direction:column; align-items:center; gap:var(--sp-1);
+  padding:var(--sp-3) var(--sp-2);
+  border:1.5px solid var(--color-border);
+  border-radius:var(--radius-md);
+  color:var(--color-text-muted);
+}
+.checkin-pip-day{ font-size:.72rem; font-weight:700; }
+.checkin-pip-reward{ font-size:.85rem; font-weight:800; }
+.checkin-pip.done{ border-color:var(--color-border); background:var(--color-accent-softer); color:var(--color-text-muted); }
+.checkin-pip.done .checkin-pip-reward::after{ content:" \2713"; }
+.checkin-pip.today{
+  border-color:var(--color-accent);
+  background:var(--color-accent-soft);
+  color:var(--color-accent-dark);
+  animation:checkin-pip-pop .4s var(--ease-bounce);
+}
+.checkin-pip.upcoming{ opacity:.6; }
+@keyframes checkin-pip-pop{
+  0%{ transform:scale(.85); }
+  100%{ transform:scale(1); }
+}
+@media (prefers-reduced-motion: reduce){
+  .checkin-pip.today{ animation:none; }
+}
+.checkin-reward-callout{ text-align:center; font-weight:700; color:var(--color-accent-dark); margin-bottom:var(--sp-4); }
