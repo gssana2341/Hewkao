@@ -139,21 +139,6 @@
   box-shadow: 0 4px 24px rgba(0,0,0,.3);
 }
 
-.nav-maneuver-icon {
-  flex-shrink: 0;
-  width: 52px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255,255,255,.18);
-  border-radius: 16px;
-  color: #fff;
-}
-.nav-maneuver-icon svg {
-  display: block;
-}
-
 .nav-instruction-text {
   flex: 1;
   min-width: 0;
@@ -312,16 +297,6 @@
     border-radius: 0;
     box-shadow: 4px 0 24px rgba(0,0,0,.15);
     order: -1;
-  }
-
-  .nav-maneuver-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
-  }
-  .nav-maneuver-icon svg {
-    width: 38px;
-    height: 38px;
   }
 
   .nav-instruction-dist {

@@ -34,7 +34,6 @@ const OVERVIEW_TO_FOLLOW_DELAY_MS = 2000;
 // ---------------------------------------------------------------------------
 const navOverlay = document.getElementById('navOverlay');
 const navMapEl = document.getElementById('navMap');
-const navManeuverIcon = document.getElementById('navManeuverIcon');
 const navInstructionText = document.getElementById('navInstructionText');
 const navInstructionDist = document.getElementById('navInstructionDistance');
 const navEtaTime = document.getElementById('navEta');
@@ -169,8 +168,7 @@ export function updateUserPosition(lat, lng, heading) {
 }
 
 /** Update the instruction bar at the top. */
-export function updateInstruction(iconSvg, text, distText) {
-  navManeuverIcon.innerHTML = iconSvg;
+export function updateInstruction(text, distText) {
   navInstructionText.textContent = text;
   navInstructionDist.textContent = distText;
 }

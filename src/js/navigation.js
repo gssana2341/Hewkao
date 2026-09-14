@@ -5,7 +5,6 @@
 import { state } from './state.js';
 import { formatDistance, formatDuration, haversine, showToast } from './utils.js';
 import { computeRoute } from './routes-api.js';
-import { stepIcon } from './nav-instructions.js';
 import { trackEvent } from './analytics.js';
 import { hideResult, directionsUrl } from './spin-result.js';
 import {
@@ -110,8 +109,7 @@ export async function startNavigation(restaurant) {
   // Show initial instruction (skip step 0 — that's "depart", already implied)
   const steps = route.steps;
   if (steps.length > 1) {
-    const instr = stepIcon(steps[1]);
-    updateInstruction(instr.icon, instr.text, formatDistance(steps[1].distanceMeters));
+    updateInstruction(steps[1].instructions || 'ตรงไป', formatDistance(steps[1].distanceMeters));
   }
   updateEta(formatDuration(route.durationSec), formatDistance(route.distanceMeters));
 
@@ -140,11 +138,10 @@ function onGpsUpdate(lat, lng, heading) {
   const stepIdx = findCurrentStepIndex(lat, lng, steps);
   const nextIdx = Math.min(stepIdx + 1, steps.length - 1);
   const nextStep = steps[nextIdx];
-  const instr = stepIcon(nextStep);
   const distToNext = nextStep.location
     ? haversine(lat, lng, nextStep.location[0], nextStep.location[1])
     : nextStep.distanceMeters;
-  updateInstruction(instr.icon, instr.text, formatDistance(distToNext));
+  updateInstruction(nextStep.instructions || 'ตรงไป', formatDistance(distToNext));
 
   // Remaining ETA — sum distance/duration from the current step onward
   let remainDist = 0, remainDur = 0;
