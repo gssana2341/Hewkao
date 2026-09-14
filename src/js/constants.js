@@ -39,10 +39,11 @@ export const PRICE_LABEL = {
   PRICE_LEVEL_VERY_EXPENSIVE: '฿฿฿฿',
 };
 
-// Thumbnails in the restaurant list are billed per image (Place Photos), about
-// 15 per visit when on, so the list shows category icons and only an opened
-// result loads a photo. Flip to true to bring list photos back.
-export const SHOW_LIST_PHOTOS = false;
+// Shop photos in the restaurant list, so people can see a place before going.
+// Each photo is a billed request (Place Photos), so restaurant-list.js only
+// loads them for cards that scroll into view and reuses the same image in the
+// result sheet. Set to false for icon-only cards at zero photo cost.
+export const SHOW_LIST_PHOTOS = true;
 
 // Phone login and plan purchases are local simulations (no OTP or payment
 // provider yet). They stay on for `npm run dev`, but the public build hides

@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { GO_METHODS, catOf } from './constants.js';
 import { escapeHTML, formatDistance, showToast, sleep } from './utils.js';
+import { getPhotoUri } from './places-api.js';
 import { isolateMarker, restoreAllMarkers, flyTo } from './map.js';
 import { highlightCard, getVisibleRestaurants } from './restaurant-list.js';
 import { openPrefs } from './preferences.js';
@@ -50,13 +51,13 @@ function pickRandom(pool) { return pool[Math.floor(Math.random() * pool.length)]
 
 // Compact one-line card used only inside the fast-spinning slot track — the
 // slot animation's math is tuned to a fixed row height, so it stays simple.
+// Always the category icon: a Places photo there would need a photographer
+// credit nobody can read at 40px mid-spin, and would bill photos for filler
+// shops the user never lands on.
 function cardHTML(r) {
   const cat = catOf(r);
-  const thumb = r.thumbUrl
-    ? `<img class="card-photo" src="${r.thumbUrl}" alt="" loading="lazy">`
-    : `<div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>`;
   const priceBit = r.priceLabel ? ` · ${r.priceLabel}` : '';
-  return `${thumb}
+  return `<div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>
     <div class="card-body">
       <div class="card-name">${escapeHTML(r.name)}</div>
       <div class="card-meta">${cat.label} · ${formatDistance(r.distance)}${priceBit}</div>
@@ -173,19 +174,22 @@ export function renderResultMethods(r) {
 }
 
 // Google's Places photo policy requires crediting the photographer, linked to
-// their Google Maps profile, whenever one of their photos is shown.
+// their Google Maps profile, whenever one of their photos is shown. The photo
+// URI is shared with the list card, so a shop already seen there costs nothing
+// more to show here.
 function renderPhoto(r) {
-  if (!r.photoUrl) {
-    resultPhotoWrapEl.hidden = true;
-    resultPhotoEl.removeAttribute('src');
-    return;
-  }
-  resultPhotoEl.src = r.photoUrl;
-  resultPhotoWrapEl.hidden = false;
+  resultPhotoEl.removeAttribute('src');
+  resultPhotoWrapEl.hidden = !r.photoName;
+  if (!r.photoName) return;
   resultPhotoCreditEl.hidden = !r.photoAuthor;
   resultPhotoCreditEl.textContent = `รูปโดย ${r.photoAuthor}`;
   if (r.photoAuthorUrl) resultPhotoCreditEl.href = r.photoAuthorUrl;
   else resultPhotoCreditEl.removeAttribute('href');
+  getPhotoUri(r).then(uri => {
+    if (state.selected !== r) return;
+    if (uri) resultPhotoEl.src = uri;
+    else resultPhotoWrapEl.hidden = true;
+  });
 }
 
 export function showResult(r) {

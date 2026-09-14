@@ -1,8 +1,8 @@
 import { state } from './state.js';
-import { catOf, LIST_COLLAPSED_KEY } from './constants.js';
+import { catOf, LIST_COLLAPSED_KEY, SHOW_LIST_PHOTOS } from './constants.js';
 import { escapeHTML, formatDistance, starRow } from './utils.js';
 import { getDislikedSet, getOpenNowOnly } from './preferences.js';
-import { fetchNearby, processResults } from './places-api.js';
+import { fetchNearby, processResults, getPhotoUri } from './places-api.js';
 import { renderMarkers } from './map.js';
 import { showResult } from './spin-result.js';
 
@@ -30,12 +30,10 @@ export function showListEmpty(msg, { retry = false } = {}) {
 
 // Richer card for the persistent restaurant list, modeled closely on Google Maps'
 // own search-result rows — star rating, category, open/closed + price, all
-// visible at a glance (no need to tap in).
+// visible at a glance (no need to tap in). The media slot starts as the
+// category icon and swaps to the shop's photo once it scrolls into view.
 export function restaurantCardHTML(r) {
   const cat = catOf(r);
-  const thumb = r.thumbUrl
-    ? `<img class="card-photo" src="${r.thumbUrl}" alt="" loading="lazy">`
-    : `<div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>`;
 
   const ratingLine = r.rating
     ? `<div class="card-meta">
@@ -59,7 +57,55 @@ export function restaurantCardHTML(r) {
       <div class="card-meta card-meta-sub">${cat.label}</div>
       <div class="card-meta card-meta-sub">${statusHTML}${formatDistance(r.distance)}${priceBit}</div>
     </div>
-    ${thumb}`;
+    <div class="card-media" data-id="${r.id}">
+      <div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>
+    </div>`;
+}
+
+/* ---------- Lazy list photos ---------- */
+// Google requires the photographer's credit wherever a Places photo appears,
+// thumbnails included.
+function photoCreditEl(r) {
+  const el = document.createElement('span');
+  el.className = 'card-photo-credit';
+  el.textContent = r.photoAuthor ? `รูป: ${r.photoAuthor}` : '';
+  return el;
+}
+
+function loadThumb(mediaEl) {
+  const r = state.restaurants.find(x => x.id === mediaEl.dataset.id);
+  if (!r?.photoName) return;
+  getPhotoUri(r).then(uri => {
+    if (!uri || !mediaEl.isConnected) return;
+    const img = new Image();
+    img.className = 'card-photo';
+    img.alt = '';
+    // Swap only once decoded, so the icon never flashes to an empty box.
+    img.onload = () => mediaEl.replaceChildren(img, photoCreditEl(r));
+    img.src = uri;
+  });
+}
+
+// Photos load only for cards that actually come into view: every photo is a
+// billed request, and a phone's collapsed sheet shows barely one card while a
+// search can return 40 shops.
+const thumbObserver = 'IntersectionObserver' in window
+  ? new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        thumbObserver.unobserve(entry.target);
+        loadThumb(entry.target);
+      });
+    }, { rootMargin: '0px 0px 200px 0px' })
+  : null;
+
+function observeThumbs() {
+  if (!SHOW_LIST_PHOTOS) return;
+  thumbObserver?.disconnect();
+  listEl.querySelectorAll('.card-media').forEach(el => {
+    if (thumbObserver) thumbObserver.observe(el);
+    else loadThumb(el);
+  });
 }
 
 // Restaurants that match the saved filters — used for the list, the map pins
@@ -95,6 +141,7 @@ export function renderList() {
       if (r) showResult(r);
     });
   });
+  observeThumbs();
 }
 
 export async function loadNearby() {

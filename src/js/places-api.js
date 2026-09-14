@@ -1,4 +1,4 @@
-import { PRICE_LABEL, SHOW_LIST_PHOTOS } from './constants.js';
+import { PRICE_LABEL } from './constants.js';
 import { haversine } from './utils.js';
 import { getRadius } from './preferences.js';
 
@@ -30,6 +30,10 @@ const PLACES_FIELD_MASK = [
 
 // Nearby Search's hard cap per request — it has no pagination.
 const NEARBY_MAX_RESULTS = 20;
+
+// One size serves both the 76px list thumbnail and the result sheet photo, so
+// a shop's photo only ever needs one request per visit.
+const PHOTO_MAX_WIDTH_PX = 480;
 
 // Keyword hints for when Google leaves a place with only generic types
 // (restaurant/food/point_of_interest) — very common for small local Thai
@@ -63,8 +67,25 @@ export function mapGoogleCategory(types, name = '') {
   return 'other';
 }
 
-export function photoUrl(photoName, maxWidthPx) {
-  return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidthPx}&key=${GOOGLE_API_KEY}`;
+// Every request to the photo media endpoint is billed (Place Photos). With
+// skipHttpRedirect it answers with the image's photoUri rather than the image,
+// and that URI is reused everywhere the shop's photo appears — list card and
+// result sheet — so showing it again costs nothing. Memory only, for this
+// visit: Google's policy forbids caching photo names, and they come fresh
+// with every search anyway.
+const photoUriByName = new Map();
+
+export function getPhotoUri(r) {
+  if (!r.photoName) return Promise.resolve('');
+  if (!photoUriByName.has(r.photoName)) {
+    const url = `https://places.googleapis.com/v1/${r.photoName}/media?maxWidthPx=${PHOTO_MAX_WIDTH_PX}&skipHttpRedirect=true&key=${GOOGLE_API_KEY}`;
+    const request = fetch(url)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => data?.photoUri || '')
+      .catch(() => '');
+    photoUriByName.set(r.photoName, request);
+  }
+  return photoUriByName.get(r.photoName);
 }
 
 async function searchNearby(lat, lng, rankPreference) {
@@ -133,8 +154,7 @@ export function processResults(places, [uLat, uLng]) {
         rating: p.rating ?? null,
         ratingCount: p.userRatingCount ?? 0,
         priceLabel: PRICE_LABEL[p.priceLevel] || '',
-        thumbUrl: SHOW_LIST_PHOTOS && photo ? photoUrl(photo.name, 160) : '',
-        photoUrl: photo ? photoUrl(photo.name, 640) : '',
+        photoName: photo?.name || '',
         photoAuthor: author?.displayName || '',
         photoAuthorUrl: absoluteUrl(author?.uri),
         openNow: p.currentOpeningHours?.openNow ?? null,

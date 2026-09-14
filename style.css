@@ -208,11 +208,19 @@ h1,h2,h3,p{margin:0;}
 }
 /* The persistent list uses a bigger, rounded-square thumbnail so rating/status/
    price are easy to scan at a glance — the compact circle above stays for the
-   spin track. The icon tile is smaller than a photo would be: an icon needs
-   less room, and list photos are off by default (SHOW_LIST_PHOTOS). */
-.restaurant-card .card-photo{ width:76px; height:76px; border-radius:var(--radius-md); }
-.restaurant-card .card-emoji{ width:56px; height:56px; border-radius:16px; }
-.restaurant-card .card-emoji svg{ width:26px; height:26px; }
+   spin track. The category icon holds the same 76px slot until the photo
+   loads, so the card never jumps. */
+.card-media{ flex-shrink:0; width:76px; display:flex; flex-direction:column; gap:2px; }
+.restaurant-card .card-photo,
+.restaurant-card .card-emoji{ width:76px; height:76px; border-radius:var(--radius-md); }
+.restaurant-card .card-photo{ animation:card-photo-in .25s var(--ease-out); }
+.restaurant-card .card-emoji svg{ width:28px; height:28px; }
+@keyframes card-photo-in{ from{ opacity:0; } to{ opacity:1; } }
+.card-photo-credit{
+  font-size:.6rem; line-height:1.3; font-weight:500;
+  color:var(--color-text-muted);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
 .card-meta{ margin-top:2px; }
 .card-meta-sub{ margin-top:1px; }
 .card-rating-num{ color:var(--color-text); font-weight:700; }
