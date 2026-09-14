@@ -9,13 +9,20 @@ import { trackEvent } from './analytics.js';
 import { hideResult, directionsUrl } from './spin-result.js';
 import {
   initNavMap, destroyNavMap, drawRoute, updateUserPosition,
-  updateInstruction, updateEta, showArrived,
+  updateInstruction, updateEta, showArrived, hideNavOverlay, showNavOverlay,
 } from './nav-map.js';
 
 const OFF_ROUTE_THRESHOLD_M = 50;   // metres from route before re-routing
 const REROUTE_COOLDOWN_MS = 5000;   // don't re-route more than once per 5s
 const ARRIVAL_THRESHOLD_M = 30;     // close enough = arrived
 const GPS_OPTIONS = { enableHighAccuracy: true, maximumAge: 3000, timeout: 8000 };
+
+const appEl = document.getElementById('app');
+const miniNavBar = document.getElementById('miniNavBar');
+const miniNavEta = document.getElementById('miniNavEta');
+const miniNavDest = document.getElementById('miniNavDest');
+const miniNavEndBtn = document.getElementById('miniNavEndBtn');
+const navMinimizeBtn = document.getElementById('navMinimizeBtn');
 
 // ---------------------------------------------------------------------------
 // Geometry helpers — all work on [lat,lng] pairs (computeRoute()'s format)
@@ -73,12 +80,54 @@ function stopGpsWatch(id) {
 }
 
 // ---------------------------------------------------------------------------
+// Minimize / resume
+// ---------------------------------------------------------------------------
+// Tracks the ETA text last written to the full instruction bar, so the mini
+// bar can show the same values on minimize without reaching into nav-map.js's
+// own DOM refs. Doesn't update live while minimized (updateEta() below still
+// runs — GPS tracking never stops — but only the hidden full bar changes);
+// tapping the mini bar to resume shows the current values immediately.
+let lastEtaText = '—', lastRemainText = '—';
+
+export function minimizeNavigation() {
+  if (!state.navigating) return;
+  hideNavOverlay();
+  appEl.classList.remove('nav-active');
+  miniNavEta.textContent = lastEtaText;
+  miniNavDest.textContent = state.navDestination?.name || '—';
+  miniNavBar.hidden = false;
+}
+
+export function resumeNavigation() {
+  if (!state.navigating) return;
+  miniNavBar.hidden = true;
+  appEl.classList.add('nav-active');
+  showNavOverlay();
+}
+
+navMinimizeBtn.addEventListener('click', minimizeNavigation);
+miniNavBar.addEventListener('click', e => {
+  if (e.target.closest('#miniNavEndBtn')) return;
+  resumeNavigation();
+});
+miniNavBar.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('#miniNavEndBtn')) resumeNavigation();
+});
+miniNavEndBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  stopNavigation();
+});
+
+// ---------------------------------------------------------------------------
 // Navigation lifecycle
 // ---------------------------------------------------------------------------
 let lastRerouteTime = 0;
 
 export async function startNavigation(restaurant) {
-  if (state.navigating) return;
+  if (state.navigating) {
+    showToast('กำลังเดินทางไปร้านเดิมอยู่ กด "จบนำทาง" ก่อน ถึงจะเริ่มเส้นทางใหม่ได้');
+    return;
+  }
 
   const [uLat, uLng] = state.userLatLng;
   showToast('กำลังคำนวณเส้นทาง…');
@@ -101,7 +150,7 @@ export async function startNavigation(restaurant) {
 
   // Close the result sheet and hide the main app chrome
   hideResult();
-  document.getElementById('app').classList.add('nav-active');
+  appEl.classList.add('nav-active');
 
   await initNavMap(uLat, uLng);
   drawRoute(route.coordinates, [restaurant.lat, restaurant.lng], restaurant.name);
@@ -111,7 +160,9 @@ export async function startNavigation(restaurant) {
   if (steps.length > 1) {
     updateInstruction(steps[1].instructions || 'ตรงไป', formatDistance(steps[1].distanceMeters));
   }
-  updateEta(formatDuration(route.durationSec), formatDistance(route.distanceMeters));
+  lastEtaText = formatDuration(route.durationSec);
+  lastRemainText = formatDistance(route.distanceMeters);
+  updateEta(lastEtaText, lastRemainText);
 
   state.navWatchId = startGpsWatch((lat, lng, heading) => {
     onGpsUpdate(lat, lng, heading);
@@ -149,7 +200,10 @@ function onGpsUpdate(lat, lng, heading) {
     remainDist += steps[i].distanceMeters;
     remainDur += steps[i].durationSec;
   }
-  updateEta(formatDuration(remainDur), formatDistance(remainDist));
+  lastEtaText = formatDuration(remainDur);
+  lastRemainText = formatDistance(remainDist);
+  updateEta(lastEtaText, lastRemainText);
+  if (!miniNavBar.hidden) miniNavEta.textContent = lastEtaText;
 
   // Off-route detection → re-route
   const offDist = distanceToLine(lat, lng, route.coordinates);
@@ -176,6 +230,9 @@ async function reroute(lat, lng) {
 }
 
 function handleArrival() {
+  // Bring the full view back so the celebration is actually seen — it lives
+  // inside the overlay minimizeNavigation() hides.
+  if (!miniNavBar.hidden) resumeNavigation();
   showArrived(state.navDestination.name);
   trackEvent('navigation_arrived', { restaurant: state.navDestination.name });
   // Auto-stop after showing the arrival message for a moment
@@ -191,6 +248,7 @@ export function stopNavigation() {
   state.navDestination = null;
 
   destroyNavMap();
-  document.getElementById('app').classList.remove('nav-active');
+  miniNavBar.hidden = true;
+  appEl.classList.remove('nav-active');
   trackEvent('navigation_stopped');
 }

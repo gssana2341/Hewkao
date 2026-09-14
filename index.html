@@ -266,12 +266,13 @@
     </div>
   </div>
 
-  <!-- ETA + stop button (bottom) -->
+  <!-- ETA + minimize + stop button (bottom) -->
   <div class="nav-bottom-bar">
     <div class="nav-eta">
       <p id="navEta" class="nav-eta-time">—</p>
       <p id="navRemaining" class="nav-eta-dist">—</p>
     </div>
+    <button id="navMinimizeBtn" type="button" class="btn btn-secondary nav-minimize-btn">ย่อ</button>
     <button id="navStopBtn" type="button" class="btn-danger nav-stop-btn">จบนำทาง</button>
   </div>
 
@@ -281,6 +282,18 @@
     <p class="nav-arrival-title">ถึงแล้ว!</p>
     <p id="navArrivalName" class="nav-arrival-name">ชื่อร้าน</p>
   </div>
+</div>
+
+<!-- Minimized navigation: shown over the main app while state.navigating is
+     true but the full nav overlay above is tucked away. Tap it to return to
+     that overlay; the whole app underneath (map, list, spin) works normally,
+     except starting a new route is blocked until this one ends. -->
+<div id="miniNavBar" class="mini-nav-bar" role="button" tabindex="0" aria-label="กลับไปหน้านำทาง" hidden>
+  <div class="mini-nav-info">
+    <p id="miniNavEta" class="mini-nav-eta">—</p>
+    <p id="miniNavDest" class="mini-nav-dest">—</p>
+  </div>
+  <button id="miniNavEndBtn" type="button" class="btn btn-secondary mini-nav-end-btn">จบนำทาง</button>
 </div>
 
 <!-- 5. Preferences modal -->

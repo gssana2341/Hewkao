@@ -185,6 +185,21 @@ export function showArrived(restaurantName) {
   navArrivalName.textContent = restaurantName;
 }
 
+/** Hide the full-screen overlay without tearing the map down (minimizing —
+ *  GPS tracking and route state keep running; there's just nothing on
+ *  screen to update until showNavOverlay() runs). */
+export function hideNavOverlay() {
+  navOverlay.hidden = true;
+}
+
+/** Show the overlay again and nudge MapLibre to redraw at its real size —
+ *  a canvas that sat under `hidden` (display:none) doesn't reliably repaint
+ *  on its own the moment it's unhidden. */
+export function showNavOverlay() {
+  navOverlay.hidden = false;
+  if (map) map.resize();
+}
+
 /** Tear down the map and hide the overlay. */
 export function destroyNavMap() {
   clearTimeout(followTimer);

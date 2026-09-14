@@ -121,6 +121,10 @@ async function runSlotAnimation(pool, finalPick) {
 
 export async function spin() {
   if (state.spinning) return;
+  if (state.navigating) {
+    showToast('กำลังเดินทางอยู่ กด "จบนำทาง" ก่อน ถึงจะสุ่มร้านใหม่ได้');
+    return;
+  }
   if (!state.restaurants.length) { showToast('ยังไม่พบร้านอาหารใกล้คุณ'); return; }
   const visible = getVisibleRestaurants();
   if (!visible.length) {
