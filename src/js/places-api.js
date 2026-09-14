@@ -2,7 +2,8 @@ import { PRICE_LABEL } from './constants.js';
 import { haversine } from './utils.js';
 import { getRadius } from './preferences.js';
 
-const GOOGLE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+// Named MAPSKEY (not VITE_-prefixed) — see envPrefix in vite.config.js.
+const GOOGLE_API_KEY = import.meta.env.MAPSKEY;
 
 const PLACES_INCLUDED_TYPES = ['restaurant', 'cafe', 'bakery', 'fast_food_restaurant', 'meal_takeaway'];
 // Hotels get tagged with a generic 'restaurant' type too (for their in-house

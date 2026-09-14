@@ -67,6 +67,13 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
     server: { port: 5173 },
+    // Vite only exposes env vars to client code whose name matches one of
+    // these prefixes — normally just VITE_. MAPSKEY is a one-off addition so
+    // the Google Maps key can keep that exact name (no VITE_ prefix) both
+    // locally and in the host's env var settings; every other var still
+    // needs VITE_. Never add a bare '' prefix here — that would expose every
+    // env var (including unprefixed secrets) to the client bundle.
+    envPrefix: ['VITE_', 'MAPSKEY'],
     plugins: [seo(env.VITE_SITE_URL)],
     build: {
       rolldownOptions: {
