@@ -7,7 +7,7 @@ import { formatDistance, formatDuration, haversine, showToast } from './utils.js
 import { computeRoute } from './routes-api.js';
 import { trackEvent } from './analytics.js';
 import { hideResult, directionsUrl } from './spin-result.js';
-import { restoreAllMarkers } from './map.js';
+import { restoreAllMarkers, clearRoute } from './map.js';
 import {
   initNavMap, destroyNavMap, drawRoute, updateUserPosition,
   updateInstruction, updateEta, showArrived, hideNavOverlay, showNavOverlay,
@@ -148,6 +148,7 @@ export async function startNavigation(restaurant) {
   state.navRoute = route;
   state.navDestination = restaurant;
   lastRerouteTime = 0;
+  document.body.classList.add('is-navigating');
 
   // Close the result sheet and hide the main app chrome
   hideResult();
@@ -247,6 +248,7 @@ export function stopNavigation() {
   state.navigating = false;
   state.navRoute = null;
   state.navDestination = null;
+  document.body.classList.remove('is-navigating');
 
   destroyNavMap();
   miniNavBar.hidden = true;
@@ -255,5 +257,6 @@ export function stopNavigation() {
   // is ever called, and nothing on the path from there back to here undid it —
   // the main map was left showing just that one pin after every trip.
   restoreAllMarkers();
+  clearRoute();
   trackEvent('navigation_stopped');
 }

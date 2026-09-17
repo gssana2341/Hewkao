@@ -61,13 +61,6 @@ function showSplashError(message) {
   splashRetryBtn.hidden = false;
 }
 
-function showLandingFallback(message) {
-  landingNotice.textContent = message;
-  landingNotice.hidden = false;
-  landing.scrollTop = 0;
-  splash.hidden = true;
-}
-
 // The map loads underneath the still-opaque splash, which only fades once the
 // map is ready. Hiding the splash first meant a failed map load (bad key,
 // billing off, offline) left a blank grey screen, with the error message
@@ -95,11 +88,11 @@ async function enterApp() {
 // GeolocationPositionError.code: 1=PERMISSION_DENIED, 2=POSITION_UNAVAILABLE,
 // 3=TIMEOUT.
 function explainLocationError(err) {
-  if (!navigator.geolocation) return 'เบราว์เซอร์นี้ไม่รองรับการหาตำแหน่ง ลองเปิดด้วยเบราว์เซอร์อื่น หรือสุ่มเมนูอาหารแทนก่อนก็ได้';
-  if (err?.code === 1) return 'HEWKAO ต้องใช้ตำแหน่งของคุณเพื่อหาร้านใกล้ๆ กรุณาอนุญาตสิทธิ์ตำแหน่งในเบราว์เซอร์ แล้วกด "สุ่มร้านใกล้ฉัน" อีกครั้ง';
-  if (err?.code === 2) return 'หาตำแหน่งของคุณไม่ได้ ลองเปิด Location Services ของเครื่อง แล้วกด "สุ่มร้านใกล้ฉัน" อีกครั้ง';
-  if (err?.code === 3) return 'หาตำแหน่งนานเกินไป กด "สุ่มร้านใกล้ฉัน" เพื่อลองอีกครั้ง';
-  return 'ไม่พบตำแหน่งของคุณ กด "สุ่มร้านใกล้ฉัน" เพื่อลองอีกครั้ง';
+  if (!navigator.geolocation) return 'เบราว์เซอร์นี้ไม่รองรับการหาตำแหน่ง';
+  if (err?.code === 1) return 'คุณปฏิเสธการให้สิทธิ์ตำแหน่ง';
+  if (err?.code === 2) return 'หาตำแหน่งของคุณไม่ได้ ลองเปิด Location Services ของเครื่อง';
+  if (err?.code === 3) return 'หาตำแหน่งนานเกินไป กรุณาลองอีกครั้ง';
+  return 'ไม่พบตำแหน่งของคุณ กรุณาลองอีกครั้ง';
 }
 
 async function tryGetLocation() {
@@ -107,12 +100,21 @@ async function tryGetLocation() {
   locating = true;
   splash.hidden = false;
   splashRetryBtn.hidden = true;
-  splashSub.textContent = 'กำลังค้นหาตำแหน่งของคุณ…';
+  landing.hidden = true; // ensure landing is hidden, strict block
+  
+  const hintEl = document.getElementById('splashHint');
+  if (hintEl) {
+    hintEl.textContent = 'เพื่อหาร้านอาหารที่ใกล้คุณที่สุด โปรดกด "อนุญาต" (Allow) ที่หน้าต่างแจ้งเตือนของเบราว์เซอร์';
+    hintEl.style.color = 'var(--color-text)';
+    hintEl.hidden = false;
+  }
+  
+  splashSub.textContent = 'กำลังขอเข้าถึงตำแหน่งของคุณ…';
   // Some browsers never call back at all when the prompt is dismissed, so
   // offer a retry after a while — without abandoning the request in flight.
   const slowHint = setTimeout(() => {
     locating = false;
-    showSplashError('ยังหาตำแหน่งไม่เจอ ถ้าไม่มีหน้าต่างขออนุญาตขึ้นมา ลองกดอีกครั้ง');
+    showSplashError('ยังหาตำแหน่งไม่เจอ ถ้าไม่มีหน้าต่างขออนุญาตขึ้นมา ลองรีเฟรชหน้าเว็บ หรือกดลองอีกครั้ง');
   }, SLOW_LOCATION_HINT_MS);
   try {
     const pos = await getPosition();
@@ -123,7 +125,12 @@ async function tryGetLocation() {
   } catch (err) {
     if (entered) return;
     console.warn('[HEWKAO] geolocation failed:', err);
-    showLandingFallback(explainLocationError(err));
+    splashSub.textContent = explainLocationError(err);
+    if (hintEl) {
+      hintEl.textContent = 'แอปนี้จำเป็นต้องใช้ตำแหน่งปัจจุบันของคุณ หากไม่เปิดสิทธิ์ จะไม่สามารถใช้งานเว็บไซต์ได้เลย โปรดไปที่การตั้งค่าเบราว์เซอร์เพื่ออนุญาตสิทธิ์ตำแหน่ง แล้วกดลองอีกครั้ง';
+      hintEl.style.color = 'var(--color-accent-dark)';
+    }
+    splashRetryBtn.hidden = false;
     trackEvent('location_denied', { reason: err?.code ? `code_${err.code}` : (err?.message || 'unknown') });
   } finally {
     clearTimeout(slowHint);

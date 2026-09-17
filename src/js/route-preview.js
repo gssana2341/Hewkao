@@ -19,11 +19,9 @@ import { trackEvent } from './analytics.js';
    people who actually ask to be guided.
    ========================================================================= */
 
-const bar = document.getElementById('routePreviewBar');
-const metaEl = document.getElementById('routePreviewMeta');
-const nameEl = document.getElementById('routePreviewName');
-const startBtn = document.getElementById('routePreviewStartBtn');
-const closeBtn = document.getElementById('routePreviewCloseBtn');
+const spinBtn = document.getElementById('spinBtn');
+const altNavBtn = document.getElementById('altNavBtn');
+const cancelPreviewBtn = document.getElementById('cancelPreviewBtn');
 
 let previewed = null;
 let listWasCollapsed = false;
@@ -58,9 +56,10 @@ export async function showRoutePreview(restaurant) {
 
   await drawRoute(route.coordinates);
 
-  metaEl.textContent = `${formatDuration(route.durationSec)} · ${formatDistance(route.distanceMeters)}`;
-  nameEl.textContent = restaurant.name;
-  bar.hidden = false;
+  spinBtn.style.display = 'none';
+  altNavBtn.style.display = 'flex';
+  cancelPreviewBtn.style.display = 'flex';
+  
   trackEvent('route_previewed', { category: restaurant.category });
 }
 
@@ -69,7 +68,9 @@ export async function showRoutePreview(restaurant) {
 export function hideRoutePreview() {
   if (!previewed) return;
   previewed = null;
-  bar.hidden = true;
+  spinBtn.style.display = '';
+  altNavBtn.style.display = 'none';
+  cancelPreviewBtn.style.display = 'none';
   clearRoute();
   restoreAllMarkers();
   setListCollapsed(listWasCollapsed, { persist: false });
@@ -81,16 +82,21 @@ export function hideRoutePreview() {
 export function dropRoutePreview() {
   if (!hasRoute() && !previewed) return;
   previewed = null;
-  bar.hidden = true;
+  spinBtn.style.display = '';
+  altNavBtn.style.display = 'none';
+  cancelPreviewBtn.style.display = 'none';
   clearRoute();
 }
 
-startBtn.addEventListener('click', async () => {
+altNavBtn.addEventListener('click', async () => {
   const restaurant = previewed;
   if (!restaurant) return;
-  bar.hidden = true;
+  spinBtn.style.display = '';
+  altNavBtn.style.display = 'none';
+  cancelPreviewBtn.style.display = 'none';
   previewed = null;
-  clearRoute();
+  // Route is deliberately NOT cleared here so it remains visible when
+  // navigation is minimized. It will be cleared when navigation stops.
   // Nav mode covers the app chrome anyway; putting the panel back now means
   // the layout is the user's own again once they end the trip.
   setListCollapsed(listWasCollapsed, { persist: false });
@@ -100,4 +106,4 @@ startBtn.addEventListener('click', async () => {
   startNavigation(restaurant);
 });
 
-closeBtn.addEventListener('click', hideRoutePreview);
+cancelPreviewBtn.addEventListener('click', hideRoutePreview);

@@ -281,6 +281,11 @@
   display: none !important;
 }
 
+/* Hide spin button completely when navigation is active (even if minimized) */
+body.is-navigating #spinBtn {
+  display: none !important;
+}
+
 /* ==========================================================================
    Minimized navigation — floats over the ordinary app (map/list/spin) once
    the full-screen overlay above is tucked away via "ย่อ", while state.navigating
@@ -289,13 +294,14 @@
    ========================================================================== */
 .mini-nav-bar {
   position: fixed;
-  top: calc(16px + env(safe-area-inset-top));
+  bottom: calc(216px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 25; /* above app chrome (1-20), below modals (80+) */
   display: flex;
   align-items: center;
   gap: 12px;
+  width: max-content;
   max-width: calc(100vw - 32px);
   padding: 10px 10px 10px 18px;
   background: #fff;

@@ -134,10 +134,9 @@
 <!-- 1. Splash: shown on load while asking for location -->
 <div id="splash" class="splash">
   <img src="assets/logo-full.png" alt="HEWKAO" class="splash-logo" width="200" height="183">
-  <p class="splash-text">จะกินอะไรดี คิดไม่ออก?</p>
-  <p class="splash-hint">HEWKAO สุ่มร้านอาหารรอบตัวคุณให้ แค่อนุญาตตำแหน่งก็เริ่มได้เลย</p>
-  <p class="splash-sub" id="splashSub">กำลังค้นหาตำแหน่งของคุณ…</p>
-  <button id="splashRetryBtn" class="btn btn-primary splash-retry-btn" hidden>ลองอีกครั้ง</button>
+  <p id="splashSub" class="splash-sub">กำลังค้นหาตำแหน่งของคุณ…</p>
+  <p id="splashHint" class="splash-hint" style="margin-top: 8px; font-size: 0.95rem; max-width: 320px; line-height: 1.5; font-weight: 500;" hidden></p>
+  <button id="splashRetryBtn" type="button" class="btn btn-primary splash-retry-btn" hidden>ลองอีกครั้ง</button>
 </div>
 
 <!-- 2. Main app -->
@@ -207,6 +206,22 @@
       </span>
       <span class="spin-btn-divider" aria-hidden="true"></span>
       <span>สุ่มร้าน</span>
+    </button>
+
+    <button id="altNavBtn" class="spin-btn" style="background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); display: none;">
+      <span class="spin-btn-dice">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+        </svg>
+      </span>
+      <span class="spin-btn-divider" aria-hidden="true"></span>
+      <span>เริ่มนำทาง</span>
+    </button>
+
+    <button id="cancelPreviewBtn" class="icon-btn" style="display: none;" aria-label="ยกเลิก" title="ยกเลิก">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M6 6l12 12M18 6 6 18"/>
+      </svg>
     </button>
 
     <button id="locateBtn" class="icon-btn locate-btn" aria-label="กลับไปตำแหน่งของฉัน" title="ตำแหน่งของฉัน">
@@ -324,20 +339,7 @@
   <button id="miniNavEndBtn" type="button" class="btn btn-secondary mini-nav-end-btn">จบนำทาง</button>
 </div>
 
-<!-- Route drawn on the main map, before committing to turn-by-turn. Tapping
-     "เริ่มนำทาง" is what actually loads nav mode. -->
-<div id="routePreviewBar" class="mini-nav-bar route-preview-bar" hidden>
-  <div class="mini-nav-info">
-    <p id="routePreviewMeta" class="mini-nav-eta">—</p>
-    <p id="routePreviewName" class="mini-nav-dest">—</p>
-  </div>
-  <button id="routePreviewStartBtn" type="button" class="btn btn-primary route-preview-start-btn">เริ่มนำทาง</button>
-  <button id="routePreviewCloseBtn" type="button" class="icon-btn route-preview-close-btn" aria-label="ปิดเส้นทาง" title="ปิดเส้นทาง">
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
-      <path d="M6 6l12 12M18 6 6 18"/>
-    </svg>
-  </button>
-</div>
+
 
 <!-- 5. Preferences modal -->
 <div id="prefsModal" class="modal-backdrop" hidden>

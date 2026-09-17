@@ -131,6 +131,8 @@ h1,h2,h3,p{margin:0;}
   padding:var(--sp-1);
   border-radius:var(--radius-full);
   box-shadow:var(--shadow-md);
+  width: max-content;
+  max-width: calc(100vw - 32px);
   transition:opacity .2s var(--ease-out), transform .2s var(--ease-out);
 }
 .map-controls .icon-btn{
@@ -632,6 +634,7 @@ h1,h2,h3,p{margin:0;}
   font-size:.85rem; font-weight:600;
   box-shadow:var(--shadow-md);
   z-index:90;
+  width: max-content;
   max-width:90vw;
   text-align:center;
   animation:toast-in .25s var(--ease-out);
