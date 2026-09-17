@@ -7,6 +7,7 @@ import { formatDistance, formatDuration, haversine, showToast } from './utils.js
 import { computeRoute } from './routes-api.js';
 import { trackEvent } from './analytics.js';
 import { hideResult, directionsUrl } from './spin-result.js';
+import { restoreAllMarkers } from './map.js';
 import {
   initNavMap, destroyNavMap, drawRoute, updateUserPosition,
   updateInstruction, updateEta, showArrived, hideNavOverlay, showNavOverlay,
@@ -250,5 +251,9 @@ export function stopNavigation() {
   destroyNavMap();
   miniNavBar.hidden = true;
   appEl.classList.remove('nav-active');
+  // route-preview.js isolates every pin but the pick's before startNavigation()
+  // is ever called, and nothing on the path from there back to here undid it —
+  // the main map was left showing just that one pin after every trip.
+  restoreAllMarkers();
   trackEvent('navigation_stopped');
 }

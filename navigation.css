@@ -334,6 +334,28 @@
   font-size: 0.8rem;
 }
 
+/* Route preview — the same pill as the minimized nav bar, since it plays the
+   same role: a compact status strip over a map the user is reading. It only
+   adds the two trailing buttons. */
+.route-preview-bar {
+  padding-right: 6px;
+}
+
+.route-preview-start-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 0 16px;
+  min-height: 38px;
+  font-size: 0.8rem;
+}
+
+.route-preview-close-btn {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  box-shadow: none;
+}
+
 /* ==========================================================================
    Desktop / Tablet layout (≥ 900px)
    On wide screens the instruction & ETA bars become a side panel on the left

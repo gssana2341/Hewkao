@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import { fileURLToPath } from 'node:url';
 
 // Every HTML page the site ships. `name` is the build entry name; `path` is
@@ -63,10 +64,18 @@ function seo(siteUrl) {
   };
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const lanMode = command === 'serve' && mode === 'lan';
   return {
-    server: { port: 5173 },
+    // `npm run dev:lan` (mode 'lan') publishes the dev server on the LAN so a
+    // phone or tablet on the same Wi-Fi can open it before anything is
+    // deployed, and serves it over HTTPS because Geolocation only runs in a
+    // secure context — over plain http://192.168.x.x the browser refuses to
+    // even ask for location and HEWKAO never gets past the splash. localhost
+    // is exempt from that rule, so plain `npm run dev` stays HTTP and keeps
+    // working without the self-signed certificate's warning.
+    server: { port: 5173, host: lanMode },
     // Vite only exposes env vars to client code whose name matches one of
     // these prefixes — normally just VITE_. MAPSKEY is a one-off addition so
     // the Google Maps key can keep that exact name (no VITE_ prefix) both
@@ -74,7 +83,9 @@ export default defineConfig(({ mode }) => {
     // needs VITE_. Never add a bare '' prefix here — that would expose every
     // env var (including unprefixed secrets) to the client bundle.
     envPrefix: ['VITE_', 'MAPSKEY'],
-    plugins: [seo(env.VITE_SITE_URL)],
+    // The certificate is self-signed, so the device asks once whether to trust
+    // it. Never part of a production build.
+    plugins: [seo(env.VITE_SITE_URL), ...(lanMode ? [basicSsl()] : [])],
     build: {
       rolldownOptions: {
         input: Object.fromEntries(PAGES.map(p => [p.name, fileURLToPath(new URL(p.file, import.meta.url))])),

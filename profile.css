@@ -7,8 +7,27 @@
 .profile-phone{ font-weight:800; font-size:1.05rem; margin-bottom:var(--sp-3); }
 .profile-label{ font-size:.85rem; font-weight:700; color:var(--color-text-muted); }
 .profile-spin-count{ font-size:1.2rem; font-weight:800; color:var(--color-accent-dark); }
-.profile-checkin-btn{ flex:none; min-height:36px; padding:var(--sp-1) var(--sp-4); font-size:.82rem; }
-.profile-history-empty{ font-size:.85rem; color:var(--color-text-muted); margin-top:var(--sp-1); }
-#profileManageBtn{ margin-top:var(--sp-5); }
 .profile-privacy-link{ text-align:center; margin-top:var(--sp-5); font-size:.78rem; }
 .profile-privacy-link a{ color:var(--color-text-muted); }
+
+/* Inline status cards — spin balance and check-in progress read at a glance
+   on the profile page itself, no separate modal needed just to see them. */
+.profile-card{
+  padding:var(--sp-4);
+  border:1.5px solid var(--color-border);
+  border-radius:var(--radius-md);
+  background:var(--color-accent-softer);
+}
+.profile-card-header{
+  display:flex; align-items:baseline; justify-content:space-between;
+  margin-bottom:var(--sp-3);
+}
+.profile-card-title{ font-size:.85rem; font-weight:700; color:var(--color-text-muted); }
+.profile-card-total{ font-size:1.15rem; font-weight:800; color:var(--color-accent-dark); }
+.profile-stat-row{
+  display:flex; align-items:center; justify-content:space-between;
+  font-size:.85rem; font-weight:600; color:var(--color-text);
+  padding:var(--sp-1) 0;
+}
+.profile-card .btn{ margin-top:var(--sp-3); }
+.profile-checkin-strip{ margin:0 0 var(--sp-3); }

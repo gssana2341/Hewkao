@@ -1,0 +1,71 @@
+rules_version = '2';
+
+// HEWKAO — Firestore security rules.
+//
+// Each user (anonymous or phone-linked) can only read/write their own
+// users/{uid} doc. The range checks on write raise the bar above "open
+// devtools, call setDoc with anything" but they are NOT real anti-cheat —
+// a user could still grant themselves credits within these bounds by calling
+// the Firestore SDK directly from the console. Closing that gap needs the
+// spin/credit mutations to move into a Cloud Function that the client can't
+// bypass — planned as a separate follow-up, not done in this pass.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && (!('spinCredits' in request.resource.data)
+            || (request.resource.data.spinCredits is int
+                && request.resource.data.spinCredits >= 0
+                && request.resource.data.spinCredits <= 100000))
+        && (!('freeSpinUsed' in request.resource.data)
+            || (request.resource.data.freeSpinUsed is int
+                && request.resource.data.freeSpinUsed >= 0
+                && request.resource.data.freeSpinUsed <= 1000))
+        && (!('checkinStreak' in request.resource.data)
+            || (request.resource.data.checkinStreak is int
+                && request.resource.data.checkinStreak >= 0
+                && request.resource.data.checkinStreak <= 7))
+        && (!('phone' in request.resource.data)
+            || (request.resource.data.phone is string
+                && request.resource.data.phone.matches('^0[689][0-9]{8}$')));
+      allow delete: if false;
+    }
+
+    // Email-link login (auth.js) is not SMS-verified, so this doc is the
+    // only thing standing between "one phone = one account" and someone
+    // spinning up unlimited accounts with throwaway emails + fake phones.
+    // Rules only ever allow *creating* it (never updating), so once a phone
+    // is claimed by a uid it can't be reassigned to another one — a second
+    // account trying to bind the same number gets permission-denied, which
+    // is the anti-spam signal, not a bug. Nobody can read it back (not even
+    // the owner) since the pairing itself is all that's needed; exposing it
+    // would let anyone enumerate which phone belongs to which account.
+    match /phoneIndex/{phone} {
+      allow read, update, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && phone.matches('^0[689][0-9]{8}$');
+    }
+
+    // Aggregate, cross-user pick counts (not per-user data) — how many times
+    // each shop has been picked for real: shown a route ("ไปเอง"), or handed
+    // off to a delivery app. Not from spins landing on it mid-animation or
+    // from the star rating; see popularity.js. Public read (it's just a
+    // number per place_id, nothing personal) so the fire badge shows before
+    // anonymous sign-in has necessarily finished. Writes are locked to
+    // "exactly one more than it was" — better than an open counter, but a
+    // script that calls this in a loop still inflates it one at a time; real
+    // protection is the same Cloud Function work already deferred for spin
+    // credits.
+    match /place_picks/{placeId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.count == 1;
+      allow update: if request.auth != null
+        && request.resource.data.count is int
+        && request.resource.data.count == resource.data.count + 1;
+      allow delete: if false;
+    }
+  }
+}

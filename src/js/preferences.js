@@ -1,4 +1,4 @@
-import { CATS, DISLIKE_KEY, RADIUS_KEY, OPEN_NOW_KEY, RADIUS_OPTIONS, RADIUS_LABELS, DEFAULT_RADIUS } from './constants.js';
+import { CATS, DISLIKE_KEY, RADIUS_KEY, OPEN_NOW_KEY, MODE_KEY, RADIUS_OPTIONS, RADIUS_LABELS, DEFAULT_RADIUS, CONTEXT_MODE_BY_ID } from './constants.js';
 import { state } from './state.js';
 import { showToast } from './utils.js';
 import { loadNearby, renderList } from './restaurant-list.js';
@@ -26,6 +26,11 @@ export function getRadius() {
 export function setRadius(v) { localStorage.setItem(RADIUS_KEY, String(v)); }
 export function getOpenNowOnly() { return localStorage.getItem(OPEN_NOW_KEY) === '1'; }
 export function setOpenNowOnly(v) { localStorage.setItem(OPEN_NOW_KEY, v ? '1' : '0'); }
+export function getContextMode() {
+  const id = localStorage.getItem(MODE_KEY);
+  return CONTEXT_MODE_BY_ID[id] ? id : 'all';
+}
+export function setContextMode(id) { localStorage.setItem(MODE_KEY, id); }
 
 function renderChips() {
   prefsChipsEl.innerHTML = CATS.filter(c => c.id !== 'other').map(c =>

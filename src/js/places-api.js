@@ -48,6 +48,19 @@ const PLACES_FIELD_MASK = [
 // Nearby Search's hard cap per request — it has no pagination.
 const NEARBY_MAX_RESULTS = 20;
 
+// Budget for one fetchNearby() sweep. Only dense areas ever spend it: a quiet
+// neighbourhood answers in a single search. Measured at มทส. ประตู 1, one of
+// the densest spots there is — 1 search finds 20 shops, 5 finds 58, 9 finds
+// 65, and it plateaus at 91 by around 21. Raising this buys more of that tail
+// at a real Places bill per extra search, so it stays one number to turn.
+const MAX_SEARCH_CALLS = 12;
+// Below this, splitting a cell further costs searches for almost no new ground.
+// Kept under the smallest radius the user can pick (200 m) so even that one
+// still splits when a spot is dense enough to truncate it.
+const MIN_CELL_RADIUS_M = 100;
+// Cells per round trip — the sweep is otherwise strictly sequential and slow.
+const SEARCH_BATCH_SIZE = 4;
+
 // One size serves both the 76px list thumbnail and the result sheet photo, so
 // a shop's photo only ever needs one request per visit.
 const PHOTO_MAX_WIDTH_PX = 480;
@@ -91,6 +104,7 @@ export function mapGoogleCategory(types, name = '') {
 // visit: Google's policy forbids caching photo names, and they come fresh
 // with every search anyway.
 const photoUriByName = new Map();
+const settledUriByName = new Map();
 
 export function getPhotoUri(r) {
   if (!r.photoName) return Promise.resolve('');
@@ -99,13 +113,21 @@ export function getPhotoUri(r) {
     const request = fetch(url)
       .then(res => (res.ok ? res.json() : null))
       .then(data => data?.photoUri || '')
-      .catch(() => '');
+      .catch(() => '')
+      .then(uri => { settledUriByName.set(r.photoName, uri); return uri; });
     photoUriByName.set(r.photoName, request);
   }
   return photoUriByName.get(r.photoName);
 }
 
-async function searchNearby(lat, lng, rankPreference) {
+// Synchronous, and deliberately never starts a request: '' means "not paid
+// for yet". The spin track uses this to show photos already fetched for the
+// list without billing Place Photos for filler shops nobody lands on.
+export function getSettledPhotoUri(r) {
+  return (r.photoName && settledUriByName.get(r.photoName)) || '';
+}
+
+async function searchNearby(lat, lng, radius) {
   const res = await fetch('https://places.googleapis.com/v1/places:searchNearby', {
     method: 'POST',
     headers: {
@@ -117,61 +139,85 @@ async function searchNearby(lat, lng, rankPreference) {
       includedTypes: PLACES_INCLUDED_TYPES,
       excludedPrimaryTypes: PLACES_EXCLUDED_PRIMARY_TYPES,
       maxResultCount: NEARBY_MAX_RESULTS,
-      rankPreference,
+      rankPreference: 'DISTANCE',
       languageCode: 'th',
       locationRestriction: {
-        circle: { center: { latitude: lat, longitude: lng }, radius: getRadius() },
+        circle: { center: { latitude: lat, longitude: lng }, radius },
       },
     }),
   });
-  if (!res.ok) throw new Error(`nearby ${rankPreference} error ${res.status}`);
+  if (!res.ok) throw new Error(`nearby error ${res.status}`);
   const data = await res.json();
   return data.places || [];
 }
 
-// Extra searches in dense areas are centred this many times the nearest-20
-// reach away from the user (north, south, east, west), and never closer than
-// the minimum, so they don't just overlap the first search.
-const RING_STEP_FACTOR = 1.5;
-const RING_STEP_MIN_M = 200;
+// Four children at ±r/2 with radius 0.75r, which covers the parent circle
+// completely — a point on the parent's edge lies at most 0.707r from the
+// nearest child's centre. Cheaper-looking children (half the radius, offset a
+// quarter) leave a ring near the parent's edge uncovered, and because every
+// cell then answers under the cap the sweep looks like it finished while those
+// edge shops were never searched for: measured at มทส., 62 shops found that
+// way against 87 with children that actually cover.
+function subdivide(cell) {
+  const offset = cell.radius / 2;
+  const dLat = offset / 111320;
+  const dLng = offset / (111320 * Math.cos((cell.lat * Math.PI) / 180));
+  return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sLat, sLng]) => ({
+    lat: cell.lat + sLat * dLat,
+    lng: cell.lng + sLng * dLng,
+    radius: cell.radius * 0.75,
+  }));
+}
 
-// Nearby Search returns at most 20 places and ranking by popularity (the API
-// default) let far-off famous places crowd out shops next to the user, so the
-// nearest 20 always load first. Only when that hits the cap — a dense area,
-// where those 20 reach barely a few hundred metres while Google's own map
-// shows far more shops around — do four more distance searches run from
-// points around the user, plus one by popularity for well-known spots further
-// out. Measured at มทส. ประตู 1 against every shop any method found: the
-// earlier 2 searches covered 38% of shops within 500 m, these 6 cover 95%
-// (paginated Text Search managed 20%). Sparse areas still cost one search.
+// A search that comes back with exactly NEARBY_MAX_RESULTS was truncated: the
+// cap hid everything past its closest 20, so that cell is split into four
+// smaller ones and each gets its own 20. Repeat until cells answer under the
+// cap (nothing left hidden) or the call budget runs out.
+//
+// The fixed four-direction ring this replaces missed shops that were plainly
+// on the map: ข้าวแกงครัวคุณยาย, 655 m from มทส. ประตู 1, landed in only one
+// of five searches, so a few metres' difference in where the user stood lost
+// it. Aiming a search straight at it didn't help either — around there even a
+// cell centred on the shop's own bearing fills its 20 with something nearer.
+// Density, not direction, is what hides shops, and only splitting until the
+// cap stops biting answers that.
+//
+// Cells are taken nearest-first so a budget that runs out in a dense market
+// leaves the far edge of the radius thin rather than the shops next to the
+// user — the ones "there's a pin right there and it didn't show" is about.
 export async function fetchNearby(lat, lng) {
-  const nearest = await searchNearby(lat, lng, 'DISTANCE');
-  if (nearest.length < NEARBY_MAX_RESULTS) return nearest;
-
-  const reach = Math.max(...nearest.map(p => haversine(lat, lng, p.location.latitude, p.location.longitude)));
-  const step = Math.max(reach * RING_STEP_FACTOR, RING_STEP_MIN_M);
-  const dLat = step / 111320;
-  const dLng = step / (111320 * Math.cos((lat * Math.PI) / 180));
-  const extra = await Promise.all([
-    searchNearby(lat + dLat, lng, 'DISTANCE'),
-    searchNearby(lat - dLat, lng, 'DISTANCE'),
-    searchNearby(lat, lng + dLng, 'DISTANCE'),
-    searchNearby(lat, lng - dLng, 'DISTANCE'),
-    searchNearby(lat, lng, 'POPULARITY'),
-  ].map(search => search.catch(err => {
-    console.warn('[HEWKAO] extra nearby search failed:', err);
-    return [];
-  })));
-
   const radius = getRadius();
-  const byId = new Map(nearest.map(p => [p.id, p]));
-  for (const p of extra.flat()) {
-    if (byId.has(p.id) || !p.location) continue;
-    // Searches centred away from the user can reach past the chosen radius.
-    if (haversine(lat, lng, p.location.latitude, p.location.longitude) > radius) continue;
-    byId.set(p.id, p);
+  const found = new Map();
+  const queue = [{ lat, lng, radius, distance: 0 }];
+  let calls = 0;
+
+  while (queue.length && calls < MAX_SEARCH_CALLS) {
+    queue.sort((a, b) => a.distance - b.distance);
+    const batch = queue.splice(0, Math.min(SEARCH_BATCH_SIZE, MAX_SEARCH_CALLS - calls));
+    calls += batch.length;
+    const results = await Promise.all(batch.map(cell =>
+      searchNearby(cell.lat, cell.lng, cell.radius).catch(err => {
+        console.warn('[HEWKAO] nearby search failed:', err);
+        return [];
+      })
+    ));
+
+    results.forEach((places, i) => {
+      for (const p of places) {
+        if (!p.location || found.has(p.id)) continue;
+        // Cells centred away from the user can reach past the chosen radius.
+        if (haversine(lat, lng, p.location.latitude, p.location.longitude) > radius) continue;
+        found.set(p.id, p);
+      }
+      const cell = batch[i];
+      if (places.length < NEARBY_MAX_RESULTS || cell.radius <= MIN_CELL_RADIUS_M) return;
+      for (const child of subdivide(cell)) {
+        child.distance = haversine(lat, lng, child.lat, child.lng);
+        if (child.distance - child.radius <= radius) queue.push(child);
+      }
+    });
   }
-  return [...byId.values()];
+  return [...found.values()];
 }
 
 function absoluteUrl(uri) {

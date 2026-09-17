@@ -1,5 +1,6 @@
 import { showToast } from './utils.js';
 import { addCredits } from './subscription.js';
+import { getCache, patch, subscribe } from './user-data.js';
 
 /* =========================================================================
    HEWKAO — daily check-in streak.
@@ -8,12 +9,10 @@ import { addCredits } from './subscription.js';
    pool consumeSpin() already spends from, so it composes for free with the
    existing free-then-credits spend order) for returning each day. Missing
    a day resets the streak to day 1; consecutive days advance it, looping
-   back to day 1 after day 7.
+   back to day 1 after day 7. Streak/claim state lives in the Firestore user
+   doc (user-data.js) so it survives across devices once logged in.
    ========================================================================= */
 
-const STREAK_KEY = 'hewkao_checkin_streak';
-const LAST_CLAIM_KEY = 'hewkao_checkin_last_claim_date';
-const LAST_SEEN_KEY = 'hewkao_checkin_last_seen_date';
 const CYCLE_LENGTH = 7;
 const DAILY_CREDIT = 1;
 
@@ -28,19 +27,19 @@ function yesterdayKey() {
 }
 
 function pendingStreakDay() {
-  const lastClaim = localStorage.getItem(LAST_CLAIM_KEY);
-  const streak = parseInt(localStorage.getItem(STREAK_KEY) || '0', 10);
+  const lastClaim = getCache().lastClaimDate;
+  const streak = getCache().checkinStreak || 0;
   if (lastClaim === todayKey()) return streak; // already claimed today
   if (lastClaim === yesterdayKey()) return streak >= CYCLE_LENGTH ? 1 : streak + 1; // consecutive day
   return 1; // gap or first visit
 }
 
 export function hasClaimedToday() {
-  return localStorage.getItem(LAST_CLAIM_KEY) === todayKey();
+  return getCache().lastClaimDate === todayKey();
 }
 
 export function getStreak() {
-  return parseInt(localStorage.getItem(STREAK_KEY) || '0', 10);
+  return getCache().checkinStreak || 0;
 }
 
 // Red dot on the profile button while today's reward is unclaimed — a quiet
@@ -60,6 +59,23 @@ function pipHTML(day, pendingDay, claimedAlready) {
       <span class="checkin-pip-day">Day ${day}</span>
       <span class="checkin-pip-reward">+${DAILY_CREDIT}</span>
     </div>`;
+}
+
+// Shared with profile.js, which shows this same strip inline on the profile
+// page instead of making "what's my streak" wait behind opening this modal.
+export function renderStripHTML() {
+  const pendingDay = pendingStreakDay();
+  const claimedAlready = hasClaimedToday();
+  let strip = '';
+  for (let day = 1; day <= CYCLE_LENGTH; day++) strip += pipHTML(day, pendingDay, claimedAlready);
+  return strip;
+}
+
+function rewardText() {
+  const pendingDay = pendingStreakDay();
+  return hasClaimedToday()
+    ? `รับไปแล้ววันนี้ (Day ${pendingDay}/${CYCLE_LENGTH})`
+    : `วันนี้ได้รับ +${DAILY_CREDIT} สปิน (Day ${pendingDay}/${CYCLE_LENGTH})`;
 }
 
 function buildModal() {
@@ -83,35 +99,36 @@ function buildModal() {
 }
 
 function renderModal() {
-  const pendingDay = pendingStreakDay();
-  const claimedAlready = hasClaimedToday();
-  let strip = '';
-  for (let day = 1; day <= CYCLE_LENGTH; day++) strip += pipHTML(day, pendingDay, claimedAlready);
-  document.getElementById('checkinStrip').innerHTML = strip;
-  document.getElementById('checkinReward').textContent = claimedAlready
-    ? `รับไปแล้ววันนี้ (Day ${pendingDay}/${CYCLE_LENGTH})`
-    : `วันนี้ได้รับ +${DAILY_CREDIT} สปิน (Day ${pendingDay}/${CYCLE_LENGTH})`;
+  document.getElementById('checkinStrip').innerHTML = renderStripHTML();
+  document.getElementById('checkinReward').textContent = rewardText();
   const claimBtn = document.getElementById('checkinClaimBtn');
+  const claimedAlready = hasClaimedToday();
   claimBtn.disabled = claimedAlready;
   claimBtn.textContent = claimedAlready ? 'รับแล้ววันนี้' : 'รับรางวัล';
 }
 
-function claim() {
+// Exported so the profile page's own claim button can grant the reward
+// without opening this modal at all — same effect either way.
+export function claim() {
   if (hasClaimedToday()) return;
   const day = pendingStreakDay();
-  localStorage.setItem(STREAK_KEY, String(day));
-  localStorage.setItem(LAST_CLAIM_KEY, todayKey());
+  patch({ checkinStreak: day, lastClaimDate: todayKey() });
   addCredits(DAILY_CREDIT);
   refreshProfileDot();
-  renderModal();
+  // Guard on existence, not just !hidden: a null modal (never opened this
+  // visit, e.g. claimed straight from the profile page) has hidden===undefined,
+  // and !undefined is true — that false positive was calling renderModal()
+  // against #checkinStrip before buildModal() had ever created it.
+  const modal = document.getElementById('checkinModal');
+  if (modal && !modal.hidden) renderModal();
   showToast(`รับสำเร็จ! +${DAILY_CREDIT} สปิน (Day ${day}/${CYCLE_LENGTH})`);
-  setTimeout(close, 900);
+  if (modal && !modal.hidden) setTimeout(close, 900);
 }
 
 // Always opens — for explicit buttons (profile, paywall). The automatic,
 // once-a-day path is maybeShow() below.
 export function open() {
-  localStorage.setItem(LAST_SEEN_KEY, todayKey());
+  patch({ lastSeenDate: todayKey() });
   buildModal();
   renderModal();
   document.getElementById('checkinModal').hidden = false;
@@ -125,8 +142,13 @@ function close() {
 // Shows the popup at most once per calendar day, regardless of claiming —
 // dismissing without claiming must not bring it back later that day.
 export function maybeShow() {
-  if (localStorage.getItem(LAST_SEEN_KEY) === todayKey()) return;
+  if (getCache().lastSeenDate === todayKey()) return;
   open();
 }
 
 refreshProfileDot();
+subscribe(() => {
+  refreshProfileDot();
+  const modal = document.getElementById('checkinModal');
+  if (modal && !modal.hidden) renderModal();
+});

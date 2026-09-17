@@ -1,14 +1,19 @@
 import { escapeHTML, showToast } from './utils.js';
 import { DEMO_MODE } from './constants.js';
-import { isLoggedIn as authIsLoggedIn, getPhone, openLoginModal, logout } from './auth.js';
-import { openPaywall, getTotalSpinsRemaining } from './subscription.js';
-import { open as openCheckin, hasClaimedToday, getStreak } from './checkin.js';
+import { isLoggedIn as authIsLoggedIn, getEmail, getPhone, openLoginModal, logout } from './auth.js';
+import { openPaywall, getSpinBreakdown } from './subscription.js';
+import { renderStripHTML, hasClaimedToday, getStreak, claim as claimCheckin } from './checkin.js';
+import { subscribe } from './user-data.js';
 
 /* =========================================================================
    HEWKAO — profile panel (top-right button).
 
    Reads everything through auth's, subscription's and checkin's public
-   exports only — this file owns no localStorage keys of its own.
+   exports only — this file owns no localStorage keys of its own. Spin
+   balance and the check-in strip render inline here (not just a button to a
+   separate modal) so opening the profile page alone already shows what's
+   going on — the paywall modal still owns picking/buying a plan, since that
+   needs its own flow, but you never *need* it just to see where you stand.
    ========================================================================= */
 
 function buildModal() {
@@ -41,50 +46,70 @@ function buildModal() {
       logout();
       showToast('ออกจากระบบแล้ว');
       renderContent();
-    } else if (e.target.closest('#profileManageBtn')) {
+    } else if (e.target.closest('#profileTopupBtn')) {
       close();
       openPaywall();
-    } else if (e.target.closest('#profileCheckinBtn')) {
-      // open(), not maybeShow(): the once-a-day guard made this button a
-      // no-op on any day the popup had already appeared.
-      close();
-      openCheckin();
+    } else if (e.target.closest('#profileClaimBtn')) {
+      // No renderContent() call needed here: claimCheckin() -> patch()
+      // notifies subscribers synchronously, and this file's own subscribe()
+      // below already re-renders on any change while the modal is open.
+      claimCheckin();
     }
   });
 }
 
 function loginSectionHTML() {
-  // Phone login is a local simulation (any 6-digit code passes), so it only
-  // shows in demo mode — the public site shouldn't collect phone numbers
-  // until real OTP verification exists.
-  if (!DEMO_MODE) return '';
+  // Login is a free email link + a (unverified, dedup-only) phone number —
+  // see auth.js. No billing dependency, so it's live for everyone.
   const body = authIsLoggedIn()
-    ? `<p class="profile-phone">${escapeHTML(getPhone())}</p>
+    ? `<p class="profile-phone">${escapeHTML(getEmail())}</p>
+       <p class="profile-phone">${escapeHTML(getPhone())}</p>
        <button id="profileLogoutBtn" type="button" class="btn btn-secondary btn-block">ออกจากระบบ</button>`
     : `<p class="profile-login-status">ยังไม่ได้เข้าสู่ระบบ</p>
-       <button id="profileLoginBtn" type="button" class="btn btn-primary btn-block">เข้าสู่ระบบด้วยเบอร์มือถือ</button>`;
+       <button id="profileLoginBtn" type="button" class="btn btn-primary btn-block">เข้าสู่ระบบด้วยอีเมล</button>`;
   return `<div class="profile-section">${body}</div>`;
 }
 
-function renderContent() {
-  const spins = getTotalSpinsRemaining();
+function spinSectionHTML() {
+  const { freeRemaining, freeLimit, purchasedCredits } = getSpinBreakdown();
+  return `
+    <div class="profile-section profile-card">
+      <div class="profile-card-header">
+        <span class="profile-card-title">สปินคงเหลือ</span>
+        <span class="profile-card-total">${freeRemaining + purchasedCredits}</span>
+      </div>
+      <div class="profile-stat-row">
+        <span>ฟรีวันนี้</span>
+        <span>${freeRemaining}/${freeLimit}</span>
+      </div>
+      <div class="profile-stat-row">
+        <span>เครดิตสะสม</span>
+        <span>${purchasedCredits}</span>
+      </div>
+      <button id="profileTopupBtn" type="button" class="btn btn-secondary btn-block">${DEMO_MODE ? 'เติมสปิน / จัดการแพ็ก' : 'HEWKAO+'}</button>
+    </div>`;
+}
+
+function checkinSectionHTML() {
   const claimedToday = hasClaimedToday();
+  return `
+    <div class="profile-section profile-card">
+      <div class="profile-card-header">
+        <span class="profile-card-title">เช็คอินรายวัน</span>
+        <span class="profile-card-total">Day ${getStreak() || 1}/7</span>
+      </div>
+      <div class="checkin-strip profile-checkin-strip">${renderStripHTML()}</div>
+      <button id="profileClaimBtn" type="button" class="btn btn-primary btn-block" ${claimedToday ? 'disabled' : ''}>
+        ${claimedToday ? 'รับแล้ววันนี้' : 'รับรางวัล'}
+      </button>
+    </div>`;
+}
 
-  const checkinStatusHTML = claimedToday
-    ? `เช็คอินวันนี้แล้ว (Day ${getStreak()}/7)`
-    : 'ยังไม่ได้เช็คอินวันนี้';
-
+function renderContent() {
   document.getElementById('profileContent').innerHTML = `
     ${loginSectionHTML()}
-    <div class="profile-section profile-section-row">
-      <span class="profile-label">สปินคงเหลือ</span>
-      <span class="profile-spin-count">${spins}</span>
-    </div>
-    <div class="profile-section profile-section-row">
-      <span class="profile-label">${checkinStatusHTML}</span>
-      <button id="profileCheckinBtn" type="button" class="btn btn-secondary profile-checkin-btn">${claimedToday ? 'ดูสตรีค' : 'เช็คอิน'}</button>
-    </div>
-    <button id="profileManageBtn" type="button" class="btn btn-secondary btn-block">${DEMO_MODE ? 'จัดการแพ็ก' : 'HEWKAO+'}</button>
+    ${spinSectionHTML()}
+    ${checkinSectionHTML()}
     <p class="profile-privacy-link"><a href="/privacy.html" target="_blank" rel="noopener">นโยบายความเป็นส่วนตัว</a></p>`;
 }
 
@@ -100,3 +125,7 @@ export function close() {
 }
 
 document.getElementById('profileBtn').addEventListener('click', open);
+subscribe(() => {
+  const modal = document.getElementById('profileModal');
+  if (modal && !modal.hidden) renderContent();
+});

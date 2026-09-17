@@ -1,16 +1,24 @@
 import { showToast } from './utils.js';
 import { DEMO_MODE } from './constants.js';
 import { open as openCheckin, hasClaimedToday } from './checkin.js';
+import { getCache, patch, subscribe } from './user-data.js';
 
 /* =========================================================================
    HEWKAO+ — spin credit wallet & subscription paywall.
 
-   Buying a plan is a *local simulation* only: there is no payment gateway
-   wired up yet, so "buying" just credits spins on this browser instantly —
-   which is why the plans only render in DEMO_MODE (see constants.js). Swap
-   the body of simulatePurchase() for a real checkout call once a provider
-   (Omise / 2C2P / PromptPay / Stripe, etc.) is chosen — everything else
-   (wallet balance, badge, paywall UI) stays the same.
+   Wallet state (free spins used today, purchased credits) lives in the
+   Firestore user doc via user-data.js, not localStorage — so it survives a
+   cleared browser and can't be edited from devtools as trivially as a
+   localStorage key (real anti-cheat still needs the spin logic itself to
+   move server-side, planned separately). subscribe(updateBadge) keeps the
+   badge in sync when that doc loads or changes from elsewhere.
+
+   Buying a plan is still a *local simulation*: there is no payment gateway
+   wired up yet, so "buying" just credits spins instantly — which is why the
+   plans only render in DEMO_MODE (see constants.js). Swap the body of
+   simulatePurchase() for a real checkout call once a provider (Omise / 2C2P
+   / PromptPay / Stripe, etc.) is chosen — everything else (wallet balance,
+   badge, paywall UI) stays the same.
    ========================================================================= */
 
 const FREE_DAILY_LIMIT = 5;
@@ -22,33 +30,37 @@ const PLANS = [
   { id: 'p599', price: 599, spins: 1500, name: 'แพ็กจัดเต็ม' },
 ];
 
-const FREE_DATE_KEY = 'hewkao_free_spin_date';
-const FREE_USED_KEY = 'hewkao_free_spin_used';
-const CREDITS_KEY = 'hewkao_spin_credits';
-
 function todayKey() {
   return new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
 }
 
 function resetFreeSpinsIfNewDay() {
-  if (localStorage.getItem(FREE_DATE_KEY) !== todayKey()) {
-    localStorage.setItem(FREE_DATE_KEY, todayKey());
-    localStorage.setItem(FREE_USED_KEY, '0');
+  if (getCache().freeSpinDate !== todayKey()) {
+    patch({ freeSpinDate: todayKey(), freeSpinUsed: 0 });
   }
 }
 
 function getFreeSpinsRemaining() {
   resetFreeSpinsIfNewDay();
-  const used = parseInt(localStorage.getItem(FREE_USED_KEY) || '0', 10);
-  return Math.max(0, FREE_DAILY_LIMIT - used);
+  return Math.max(0, FREE_DAILY_LIMIT - (getCache().freeSpinUsed || 0));
 }
 
 function getPurchasedCredits() {
-  return parseInt(localStorage.getItem(CREDITS_KEY) || '0', 10);
+  return getCache().spinCredits || 0;
 }
 
 export function getTotalSpinsRemaining() {
   return getFreeSpinsRemaining() + getPurchasedCredits();
+}
+
+// For the profile page's inline breakdown — the two numbers that make up
+// "สปินคงเหลือ" instead of just the total.
+export function getSpinBreakdown() {
+  return {
+    freeRemaining: getFreeSpinsRemaining(),
+    freeLimit: FREE_DAILY_LIMIT,
+    purchasedCredits: getPurchasedCredits(),
+  };
 }
 
 export function canSpin() {
@@ -59,18 +71,17 @@ export function canSpin() {
 export function consumeSpin() {
   resetFreeSpinsIfNewDay();
   if (getFreeSpinsRemaining() > 0) {
-    const used = parseInt(localStorage.getItem(FREE_USED_KEY) || '0', 10);
-    localStorage.setItem(FREE_USED_KEY, String(used + 1));
+    patch({ freeSpinUsed: (getCache().freeSpinUsed || 0) + 1 });
   } else {
-    localStorage.setItem(CREDITS_KEY, String(Math.max(0, getPurchasedCredits() - 1)));
+    patch({ spinCredits: Math.max(0, getPurchasedCredits() - 1) });
   }
   updateBadge();
 }
 
-// The one writer of the credits key — used by plan purchases and by the daily
-// check-in reward alike.
+// The one writer of the credits field — used by plan purchases and by the
+// daily check-in reward alike.
 export function addCredits(n) {
-  localStorage.setItem(CREDITS_KEY, String(getPurchasedCredits() + n));
+  patch({ spinCredits: getPurchasedCredits() + n });
   updateBadge();
 }
 
@@ -217,3 +228,4 @@ function injectPrefsLink() {
 
 injectBadge();
 injectPrefsLink();
+subscribe(updateBadge);

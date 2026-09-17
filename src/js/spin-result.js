@@ -1,12 +1,14 @@
 import { state } from './state.js';
 import { GO_METHODS, catOf } from './constants.js';
 import { escapeHTML, formatDistance, showToast, sleep } from './utils.js';
-import { getPhotoUri } from './places-api.js';
+import { getPhotoUri, getSettledPhotoUri } from './places-api.js';
 import { isolateMarker, restoreAllMarkers, flyTo } from './map.js';
 import { highlightCard, getVisibleRestaurants } from './restaurant-list.js';
 import { openPrefs } from './preferences.js';
 import { canSpin, consumeSpin, openPaywall } from './subscription.js';
 import { maybeShow as maybeShowCheckin } from './checkin.js';
+import { showRoutePreview, dropRoutePreview } from './route-preview.js';
+import { recordPick } from './popularity.js';
 import { trackEvent } from './analytics.js';
 
 const spinBtn = document.getElementById('spinBtn');
@@ -51,16 +53,27 @@ function pickRandom(pool) { return pool[Math.floor(Math.random() * pool.length)]
 
 // Compact one-line card used only inside the fast-spinning slot track — the
 // slot animation's math is tuned to a fixed row height, so it stays simple.
-// Always the category icon: a Places photo there would need a photographer
-// credit nobody can read at 40px mid-spin, and would bill photos for filler
-// shops the user never lands on.
+// A shop's photo shows only when it has *already* been fetched for the list,
+// never by starting a request here: every Place Photo is billed, and a spin
+// flings past ~26 filler shops the user never lands on. The photo sits in the
+// same 40px circle the category icon uses, so the row height can't shift, and
+// it carries the photographer's credit Google's policy asks for wherever one
+// of their photos appears.
 function cardHTML(r) {
   const cat = catOf(r);
   const priceBit = r.priceLabel ? ` · ${r.priceLabel}` : '';
-  return `<div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>
+  const photoUri = getSettledPhotoUri(r);
+  const media = photoUri
+    ? `<img class="card-photo" src="${escapeHTML(photoUri)}" alt="">`
+    : `<div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>`;
+  const credit = photoUri && r.photoAuthor
+    ? `<div class="card-photo-credit">รูป: ${escapeHTML(r.photoAuthor)}</div>`
+    : '';
+  return `${media}
     <div class="card-body">
       <div class="card-name">${escapeHTML(r.name)}</div>
       <div class="card-meta">${cat.label} · ${formatDistance(r.distance)}${priceBit}</div>
+      ${credit}
     </div>`;
 }
 
@@ -199,6 +212,8 @@ function renderPhoto(r) {
 }
 
 export function showResult(r) {
+  // A new pick replaces any route still drawn from the previous one.
+  dropRoutePreview();
   state.selected = r;
   state.selectedMethod = 'self';
   rememberPick(r, getVisibleRestaurants().length);
@@ -276,12 +291,15 @@ goBtn.addEventListener('click', async () => {
   if (!r) return;
   trackEvent('go_clicked', { method: state.selectedMethod, category: r.category });
   if (state.selectedMethod === 'self') {
-    // Dynamic: this is what keeps MapLibre GL JS out of everyone's initial
-    // download (see the comment in main.js) — loaded on first use, then
-    // cached by the browser for the rest of the visit.
-    const { startNavigation } = await import('./navigation.js');
-    startNavigation(r);
+    // Draws the route on the map that's already open rather than starting
+    // turn-by-turn — route-preview.js explains why, and owns the button that
+    // does start it.
+    showRoutePreview(r);
   } else {
+    // Same "real intent to go" signal as the route preview — see
+    // popularity.js — just via a delivery app instead of getting there
+    // themselves.
+    recordPick(r.id);
     const url = deliverySearchUrl(state.selectedMethod, r);
     window.open(url, '_blank', 'noopener');
   }

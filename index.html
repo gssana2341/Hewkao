@@ -92,7 +92,7 @@
     <ul class="landing-features">
       <li><b>ตัดของที่ไม่อยากกิน</b>ไม่เอาญี่ปุ่น ไม่เอาทะเล ติ๊กออกได้ ร้านพวกนั้นจะไม่โผล่มาในวงล้อ</li>
       <li><b>เฉพาะร้านที่เปิดอยู่</b>เปิดตัวกรองนี้ไว้ จะได้ไม่ต้องไปเจอร้านปิด</li>
-      <li><b>เลือกระยะได้</b>ตั้งแต่ 1 ถึง 5 กม. หิวมากก็เอาแค่ใกล้ๆ</li>
+      <li><b>เลือกระยะได้</b>ตั้งแต่ 200 ม. ถึง 2 กม. หิวมากก็เอาแค่ใกล้ๆ</li>
       <li><b>ร้านเล็กก็มีสิทธิ์</b>ไม่ใช่แค่ร้านดัง ร้านข้าวแกงหน้าปากซอยก็ถูกสุ่มได้เหมือนกัน</li>
     </ul>
   </section>
@@ -160,6 +160,10 @@
     <div class="list-header">
       <h2>ร้านใกล้คุณ</h2>
       <span id="listCount" class="list-count">กำลังค้นหา…</span>
+    </div>
+    <div class="mode-chips-wrap">
+      <div id="modeChips" class="chips"></div>
+      <p id="modeHint" class="mode-hint"></p>
     </div>
     <div id="restaurantList" class="restaurant-list"></div>
   </div>
@@ -294,6 +298,21 @@
     <p id="miniNavDest" class="mini-nav-dest">—</p>
   </div>
   <button id="miniNavEndBtn" type="button" class="btn btn-secondary mini-nav-end-btn">จบนำทาง</button>
+</div>
+
+<!-- Route drawn on the main map, before committing to turn-by-turn. Tapping
+     "เริ่มนำทาง" is what actually loads nav mode. -->
+<div id="routePreviewBar" class="mini-nav-bar route-preview-bar" hidden>
+  <div class="mini-nav-info">
+    <p id="routePreviewMeta" class="mini-nav-eta">—</p>
+    <p id="routePreviewName" class="mini-nav-dest">—</p>
+  </div>
+  <button id="routePreviewStartBtn" type="button" class="btn btn-primary route-preview-start-btn">เริ่มนำทาง</button>
+  <button id="routePreviewCloseBtn" type="button" class="icon-btn route-preview-close-btn" aria-label="ปิดเส้นทาง" title="ปิดเส้นทาง">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18"/>
+    </svg>
+  </button>
 </div>
 
 <!-- 5. Preferences modal -->

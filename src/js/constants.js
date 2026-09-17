@@ -27,9 +27,33 @@ export const DISLIKE_KEY = 'hewkao_disliked_categories';
 export const RADIUS_KEY = 'hewkao_search_radius';
 export const OPEN_NOW_KEY = 'hewkao_open_now_only';
 export const LIST_COLLAPSED_KEY = 'hewkao_list_collapsed';
-export const RADIUS_OPTIONS = [1000, 2000, 3000, 5000];
-export const RADIUS_LABELS = { 1000: '1 กม.', 2000: '2 กม.', 3000: '3 กม.', 5000: '5 กม.' };
-export const DEFAULT_RADIUS = 3000;
+export const MODE_KEY = 'hewkao_context_mode';
+
+// "Suited for X" isn't data Google gives us — Places has no such field, and
+// guessing it from category/price with an unexplained score would be exactly
+// the kind of mismatched-with-what's-really-there problem already hit once
+// with search coverage. So each mode is one plain, disclosed rule on fields
+// the app already has, shown as the mode's own subtitle rather than hidden
+// behind a "smart" label — the user can see and judge the rule itself.
+export const CONTEXT_MODES = [
+  { id: 'all', label: 'ทั้งหมด', hint: '' },
+  {
+    id: 'family', label: 'ครอบครัว', hint: 'ร้านราคาย่อมเยา (฿–฿฿)',
+    match: r => !r.priceLabel || r.priceLabel === '฿' || r.priceLabel === '฿฿',
+  },
+  {
+    id: 'date', label: 'แฟน', hint: 'ราคา ฿฿฿ ขึ้นไป หรือคาเฟ่',
+    match: r => r.priceLabel === '฿฿฿' || r.priceLabel === '฿฿฿฿' || r.category === 'cafe',
+  },
+  {
+    id: 'friends', label: 'เพื่อน', hint: 'ร้านที่มีรีวิวเยอะ คึกคัก',
+    match: r => r.ratingCount >= 20,
+  },
+];
+export const CONTEXT_MODE_BY_ID = Object.fromEntries(CONTEXT_MODES.map(m => [m.id, m]));
+export const RADIUS_OPTIONS = [200, 500, 1000, 2000];
+export const RADIUS_LABELS = { 200: '200 ม.', 500: '500 ม.', 1000: '1 กม.', 2000: '2 กม.' };
+export const DEFAULT_RADIUS = 500;
 export const GOOGLE_MAP_ID = 'b1db59f4d928f84d6e05120c';
 export const PRICE_LABEL = {
   PRICE_LEVEL_FREE: 'ฟรี',
@@ -45,9 +69,9 @@ export const PRICE_LABEL = {
 // result sheet. Set to false for icon-only cards at zero photo cost.
 export const SHOW_LIST_PHOTOS = true;
 
-// Phone login and plan purchases are local simulations (no OTP or payment
-// provider yet). They stay on for `npm run dev`, but the public build hides
-// them unless VITE_DEMO_MODE=true is set explicitly.
+// Login (email link, see auth.js) is real; plan purchases are still a local
+// simulation (no payment provider yet). Both stay on for `npm run dev`, but
+// the public build hides them unless VITE_DEMO_MODE=true is set explicitly.
 export const DEMO_MODE = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === 'true';
 
 // Prototype only: "ไปเอง" opens Google Maps directions for every result. The

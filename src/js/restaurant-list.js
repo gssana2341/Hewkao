@@ -1,8 +1,9 @@
 import { state } from './state.js';
-import { catOf, LIST_COLLAPSED_KEY, SHOW_LIST_PHOTOS } from './constants.js';
+import { catOf, LIST_COLLAPSED_KEY, SHOW_LIST_PHOTOS, CONTEXT_MODES, CONTEXT_MODE_BY_ID } from './constants.js';
 import { escapeHTML, formatDistance, starRow } from './utils.js';
-import { getDislikedSet, getOpenNowOnly } from './preferences.js';
+import { getDislikedSet, getOpenNowOnly, getContextMode, setContextMode } from './preferences.js';
 import { fetchNearby, processResults, getPhotoUri } from './places-api.js';
+import { isPopular, loadPopularity } from './popularity.js';
 import { renderMarkers } from './map.js';
 import { showResult } from './spin-result.js';
 
@@ -49,6 +50,10 @@ export function restaurantCardHTML(r) {
       ? `<span class="card-status card-status-closed">ปิดแล้ว</span> · `
       : '';
   const priceBit = r.priceLabel ? ` · ${r.priceLabel}` : '';
+  // Sibling of .card-media, not inside it — loadThumb() below replaces that
+  // element's children wholesale when the photo arrives, which would delete
+  // a badge placed inside it.
+  const fireBadge = isPopular(r.id) ? '<span class="card-fire-badge" title="ร้านที่คนไปเยอะ (จากสถิติของเรา)">🔥</span>' : '';
 
   return `
     <div class="card-body">
@@ -59,7 +64,8 @@ export function restaurantCardHTML(r) {
     </div>
     <div class="card-media" data-id="${r.id}">
       <div class="card-emoji" style="--cat:${cat.color}">${cat.icon}</div>
-    </div>`;
+    </div>
+    ${fireBadge}`;
 }
 
 /* ---------- Lazy list photos ---------- */
@@ -114,8 +120,32 @@ export function getVisibleRestaurants() {
   const disliked = getDislikedSet();
   let list = state.restaurants.filter(r => !disliked.has(r.category));
   if (getOpenNowOnly()) list = list.filter(r => r.openNow !== false);
+  const mode = CONTEXT_MODE_BY_ID[getContextMode()];
+  if (mode?.match) list = list.filter(mode.match);
   return list;
 }
+
+/* ---------- Context mode chips (ทั้งหมด / ครอบครัว / แฟน / เพื่อน) ---------- */
+const modeChipsEl = document.getElementById('modeChips');
+const modeHintEl = document.getElementById('modeHint');
+
+function renderModeChips() {
+  const current = getContextMode();
+  modeChipsEl.innerHTML = CONTEXT_MODES.map(m =>
+    `<button type="button" class="chip ${current === m.id ? 'selected' : ''}" data-mode="${m.id}">${escapeHTML(m.label)}</button>`
+  ).join('');
+  modeHintEl.textContent = CONTEXT_MODE_BY_ID[current]?.hint || '';
+  modeChipsEl.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      if (chip.dataset.mode === current) return;
+      setContextMode(chip.dataset.mode);
+      renderModeChips();
+      renderList();
+      renderMarkers();
+    });
+  });
+}
+renderModeChips();
 
 export function highlightCard(id) {
   listEl.querySelectorAll('.restaurant-card').forEach(el => {
@@ -168,6 +198,11 @@ export async function loadNearby() {
   } else {
     spinBtn.disabled = false;
   }
+  // Fire badges never block the first paint — they're a Firestore round trip
+  // on top of a list that's often already 100+ shops, so they arrive after
+  // and re-render just the list once ready. The badge is list-only (map pins
+  // don't show it), so there's nothing on the map to redraw here.
+  loadPopularity(state.restaurants.map(r => r.id)).then(renderList);
 }
 
 /* ---------- Mobile list-panel drag ---------- */
@@ -224,19 +259,54 @@ window.addEventListener('resize', () => {
 });
 
 /* ---------- Sidebar collapse (desktop, full-screen map) ---------- */
-export function setListCollapsed(collapsed) {
-  // Clear any inline transform left behind by the mobile drag-sheet logic —
-  // it has higher specificity than the desktop .list-collapsed CSS rule and
-  // was silently overriding it, making the collapse look like a no-op.
-  listPanel.style.transform = '';
-  appEl.classList.toggle('list-collapsed', collapsed);
-  listToggleBtn.setAttribute('aria-label', collapsed ? 'แสดงรายการร้าน' : 'ซ่อนรายการร้าน');
-  localStorage.setItem(LIST_COLLAPSED_KEY, collapsed ? '1' : '0');
+// keepCenter re-centres the map once the panel has finished animating, so the
+// view doesn't drift as the map's width changes. Callers that are about to
+// aim the camera themselves pass false: the re-centre lands ~320 ms later and
+// would otherwise undo whatever they just framed (it was quietly cancelling
+// the route preview's fitBounds).
+// Desktop collapses a sidebar (.list-collapsed on #app); mobile drags a
+// bottom sheet (.expanded on the panel itself, plus an explicit inline
+// transform — see the drag handlers above). They're unrelated mechanisms, so
+// whether the list is "in the way" of the map has to be read from whichever
+// one actually applies at the current width.
+export function isListCollapsed() {
+  return isMobile() ? !listPanel.classList.contains('expanded') : appEl.classList.contains('list-collapsed');
+}
+
+// persist:false is for callers that move the panel temporarily — the route
+// preview tucks it away while a route is on screen, and that is not the user
+// choosing to keep the list closed. Without this, closing the tab mid-preview
+// left the list collapsed on the next visit. persist only ever applied to the
+// desktop mechanism anyway (mobile's sheet position was never saved).
+export function setListCollapsed(collapsed, { keepCenter = true, persist = true } = {}) {
+  if (isMobile()) {
+    // Route-preview.js used to call this on mobile expecting it to hide the
+    // sheet — it only ever touched the desktop class below, so the sheet
+    // stayed exactly where the user's last drag left it (often full-open),
+    // overlapping the map controls. This mirrors what endDrag() itself does.
+    panelH = listPanel.getBoundingClientRect().height;
+    listPanel.classList.remove('dragging');
+    listPanel.classList.toggle('expanded', !collapsed);
+    listPanel.style.transform = `translateY(${collapsed ? collapsedTranslate() : 0}px)`;
+  } else {
+    // Clear any inline transform left behind by the mobile drag-sheet logic —
+    // it has higher specificity than the desktop .list-collapsed CSS rule and
+    // was silently overriding it, making the collapse look like a no-op.
+    listPanel.style.transform = '';
+    appEl.classList.toggle('list-collapsed', collapsed);
+    listToggleBtn.setAttribute('aria-label', collapsed ? 'แสดงรายการร้าน' : 'ซ่อนรายการร้าน');
+    if (persist) localStorage.setItem(LIST_COLLAPSED_KEY, collapsed ? '1' : '0');
+  }
   if (state.map) {
-    const center = state.map.getCenter();
+    // The centre is only snapshotted when the caller wants the view held;
+    // otherwise whatever it is when the timer fires gets re-applied. Calling
+    // setCenter at all is not optional either way — the resize trigger on its
+    // own leaves the map painted blank (line and markers still draw, no
+    // tiles) until something nudges it to redraw.
+    const held = keepCenter ? state.map.getCenter() : null;
     setTimeout(() => {
       google.maps.event.trigger(state.map, 'resize');
-      if (center) state.map.setCenter(center);
+      state.map.setCenter(held ?? state.map.getCenter());
     }, 320);
   }
 }

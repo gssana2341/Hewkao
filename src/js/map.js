@@ -83,13 +83,56 @@ export async function setMapColorScheme(colorSchemeName) {
 
   // Markers were just wiped above, so renderMarkers() must run first —
   // isolateMarker() only hides/shows markers that already exist. Keep "the
-  // pick" isolated if its result sheet is still open.
+  // pick" isolated if its result sheet is still open, or if its route is
+  // drawn — the route view deliberately shows only the shop and the user.
   renderMarkers();
-  if (state.selected && !document.getElementById('resultSheet').hidden) isolateMarker(state.selected);
+  const showingPick = !document.getElementById('resultSheet').hidden || hasRoute();
+  if (state.selected && showingPick) isolateMarker(state.selected);
+  if (routeCoords) paintRoute(routeCoords);
 }
 
 export function flyTo([lat, lng], zoom) {
   state.map.moveCamera({ center: { lat, lng }, zoom });
+}
+
+/* ---------- Route line on the main map ---------- */
+// Drawn straight onto the map the user is already looking at, so "where is
+// this place?" costs nothing more than the route request the Go button
+// already makes — no switching into nav mode, and MapLibre (~300 KB) stays
+// unloaded until someone actually asks to be guided there.
+let routeLine = null;
+let routeCoords = null;
+
+export function hasRoute() { return !!routeCoords; }
+
+// Painting is split from framing because switching map style rebuilds the Map
+// instance from scratch (see setMapColorScheme): the line has to be put back
+// on the new instance without yanking the camera the user just kept.
+async function paintRoute(coords) {
+  const { Polyline } = await google.maps.importLibrary('maps');
+  routeLine?.setMap(null);
+  routeLine = new Polyline({
+    path: coords.map(([lat, lng]) => ({ lat, lng })),
+    map: state.map,
+    strokeColor: '#ff5a36',
+    strokeOpacity: 0.95,
+    strokeWeight: 5,
+  });
+}
+
+export async function drawRoute(coords) {
+  routeCoords = coords;
+  await paintRoute(coords);
+  const bounds = new google.maps.LatLngBounds();
+  coords.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+  // Padding keeps both ends clear of the top bar and the bottom controls.
+  state.map.fitBounds(bounds, { top: 90, right: 60, bottom: 180, left: 60 });
+}
+
+export function clearRoute() {
+  routeLine?.setMap(null);
+  routeLine = null;
+  routeCoords = null;
 }
 
 export function renderMarkers() {
