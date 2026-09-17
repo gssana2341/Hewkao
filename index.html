@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="checkin.css">
 <link rel="stylesheet" href="landing.css">
 <link rel="stylesheet" href="navigation.css">
+<link rel="stylesheet" href="feedback.css">
 </head>
 <body>
 
@@ -144,9 +145,9 @@
   <div id="map" class="map"></div>
 
   <div class="top-bar">
-    <div class="brand-chip">
+    <a href="/" class="brand-chip" aria-label="กลับหน้าแรก HEWKAO">
       <img src="assets/logo-horizontal.png" alt="HEWKAO" class="brand-logo" width="65" height="24">
-    </div>
+    </a>
     <button id="profileBtn" class="icon-btn" aria-label="โปรไฟล์" title="โปรไฟล์">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="8" r="3.6"/>
@@ -158,13 +159,10 @@
   <div id="listPanel" class="list-panel">
     <div class="list-handle" id="listHandle" role="button" tabindex="0" aria-label="ลากเพื่อดูรายชื่อร้าน"><span></span></div>
     <div class="list-header">
-      <h2>ร้านใกล้คุณ</h2>
+      <div id="modeChips" class="chips"></div>
       <span id="listCount" class="list-count">กำลังค้นหา…</span>
     </div>
-    <div class="mode-chips-wrap">
-      <div id="modeChips" class="chips"></div>
-      <p id="modeHint" class="mode-hint"></p>
-    </div>
+    <p id="modeHint" class="mode-hint"></p>
     <div id="restaurantList" class="restaurant-list"></div>
   </div>
 
@@ -191,6 +189,12 @@
     </button>
 
     <button id="spinBtn" class="spin-btn" disabled>
+      <span class="spin-btn-sparkle spin-btn-sparkle-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2c.6 3.6 1.4 6.4 2.4 8.4 2 1 4.8 1.8 8.4 2.4-3.6.6-6.4 1.4-8.4 2.4-1 2-1.8 4.8-2.4 8.4-.6-3.6-1.4-6.4-2.4-8.4-2-1-4.8-1.8-8.4-2.4 3.6-.6 6.4-1.4 8.4-2.4 1-2 1.8-4.8 2.4-8.4z"/></svg>
+      </span>
+      <span class="spin-btn-sparkle spin-btn-sparkle-2" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M12 2c.6 3.6 1.4 6.4 2.4 8.4 2 1 4.8 1.8 8.4 2.4-3.6.6-6.4 1.4-8.4 2.4-1 2-1.8 4.8-2.4 8.4-.6-3.6-1.4-6.4-2.4-8.4-2-1-4.8-1.8-8.4-2.4 3.6-.6 6.4-1.4 8.4-2.4 1-2 1.8-4.8 2.4-8.4z"/></svg>
+      </span>
       <span class="spin-btn-dice" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="18" height="18" rx="4"/>
@@ -201,6 +205,7 @@
           <circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>
         </svg>
       </span>
+      <span class="spin-btn-divider" aria-hidden="true"></span>
       <span>สุ่มร้าน</span>
     </button>
 
@@ -211,20 +216,38 @@
       </svg>
     </button>
   </div>
+
+  <button id="feedbackBtn" class="feedback-fab" aria-label="ส่งความคิดเห็น" title="ส่งความคิดเห็น">
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 5h16v11H9l-4.5 4V5z"/>
+      <path d="M8 9.5h8M8 12.5h5"/>
+    </svg>
+  </button>
 </div>
 
 <!-- 3. Spin overlay -->
 <div id="spinOverlay" class="spin-overlay" hidden>
-  <div class="spin-frame">
-    <div class="spin-fade spin-fade-top"></div>
-    <div class="spin-track" id="spinTrack"></div>
-    <div class="spin-fade spin-fade-bottom"></div>
+  <div class="spin-frame-wrap">
+    <img class="spin-deco spin-deco-sparkle-1" src="/assets/mascot/sparkle-star.png" alt="" aria-hidden="true">
+    <img class="spin-deco spin-deco-mascot" src="/assets/mascot/mascot-bowl.png" alt="" aria-hidden="true">
+    <img class="spin-deco spin-deco-sparkle-2" src="/assets/mascot/sparkle-star.png" alt="" aria-hidden="true">
+    <img class="spin-deco spin-deco-bowl" src="/assets/mascot/rice-bowl-egg.png" alt="" aria-hidden="true">
+    <img class="spin-deco spin-deco-utensils" src="/assets/mascot/fork-spoon-heart.png" alt="" aria-hidden="true">
+    <div class="spin-frame">
+      <div class="spin-fade spin-fade-top"></div>
+      <div class="spin-track" id="spinTrack"></div>
+      <div class="spin-fade spin-fade-bottom"></div>
+    </div>
   </div>
 </div>
 
 <!-- 4. Result bottom sheet -->
 <div id="resultBackdrop" class="result-backdrop" hidden></div>
 <div id="resultSheet" class="result-sheet" role="dialog" aria-modal="true" aria-labelledby="resultName" hidden>
+  <img class="spin-deco spin-deco-sparkle-1" src="/assets/mascot/sparkle-star.png" alt="" aria-hidden="true">
+  <img class="spin-deco spin-deco-mascot" src="/assets/mascot/mascot-bowl.png" alt="" aria-hidden="true">
+  <img class="spin-deco spin-deco-sparkle-2" src="/assets/mascot/sparkle-star.png" alt="" aria-hidden="true">
+  <div class="result-card">
   <button id="resultCloseBtn" type="button" class="icon-btn sheet-close" aria-label="ปิด" title="ปิด">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
       <path d="M6 6l12 12M18 6 6 18"/>
@@ -255,6 +278,7 @@
   <div class="result-actions">
     <button id="respinBtn" type="button" class="btn btn-secondary">สุ่มใหม่</button>
     <button id="goBtn" type="button" class="btn btn-primary">เริ่มเดินทาง</button>
+  </div>
   </div>
 </div>
 

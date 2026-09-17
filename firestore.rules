@@ -49,6 +49,21 @@ service cloud.firestore {
         && phone.matches('^0[689][0-9]{8}$');
     }
 
+    // Free-text feedback (feedback.js) — anyone can create their own, only
+    // the app owner's account (matched by email — no custom claims/Cloud
+    // Function set up for real roles) can read them back, via the in-app
+    // admin view at ?admin=feedback (admin-feedback.js). No update/delete so
+    // a submission can't be edited or erased after the fact.
+    match /feedback/{feedbackId} {
+      allow read: if request.auth != null && request.auth.token.email == 'zoomgamer807@gmail.com';
+      allow update, delete: if false;
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000;
+    }
+
     // Aggregate, cross-user pick counts (not per-user data) — how many times
     // each shop has been picked for real: shown a route ("ไปเอง"), or handed
     // off to a delivery app. Not from spins landing on it mid-animation or

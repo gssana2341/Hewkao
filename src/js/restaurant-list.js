@@ -69,15 +69,12 @@ export function restaurantCardHTML(r) {
 }
 
 /* ---------- Lazy list photos ---------- */
-// Google requires the photographer's credit wherever a Places photo appears,
-// thumbnails included.
-function photoCreditEl(r) {
-  const el = document.createElement('span');
-  el.className = 'card-photo-credit';
-  el.textContent = r.photoAuthor ? `รูป: ${r.photoAuthor}` : '';
-  return el;
-}
-
+// No credit caption on this thumbnail: Google's Places API photo policy
+// explicitly allows omitting author attribution "if space is limited (such as
+// in a gallery or for thumbnails)... provided the user is able to access a
+// larger version of the image that includes the full author attribution."
+// Tapping a card opens the result sheet, whose bigger photo does show it
+// (renderPhoto() in spin-result.js) — so that condition is already met.
 function loadThumb(mediaEl) {
   const r = state.restaurants.find(x => x.id === mediaEl.dataset.id);
   if (!r?.photoName) return;
@@ -87,7 +84,7 @@ function loadThumb(mediaEl) {
     img.className = 'card-photo';
     img.alt = '';
     // Swap only once decoded, so the icon never flashes to an empty box.
-    img.onload = () => mediaEl.replaceChildren(img, photoCreditEl(r));
+    img.onload = () => mediaEl.replaceChildren(img);
     img.src = uri;
   });
 }
@@ -129,10 +126,20 @@ export function getVisibleRestaurants() {
 const modeChipsEl = document.getElementById('modeChips');
 const modeHintEl = document.getElementById('modeHint');
 
+const MODE_ICON_PATHS = {
+  all: '<path d="M7 2v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V2M9 11v11M17 2c-1.7 0-3 1.8-3 4v4.5c0 1 .7 1.5 1.7 1.5H17M17 2v19"/>',
+  family: '<circle cx="9" cy="7" r="2.4"/><circle cx="16" cy="8.3" r="2"/><path d="M4 20c.5-3.1 2.2-5.2 5-5.2s4.5 2.1 5 5.2M14.2 20c.4-2.4 1.6-4.1 3.8-4.3"/>',
+  date: '<path d="M12 20s-7-4.4-9.3-8.8C1.3 8 2.7 5 6 5c2 0 3.3 1 4 2.3C10.7 6 12 5 14 5c3.3 0 4.7 3 3.3 6.2C15 15.6 12 20 12 20z"/>',
+  friends: '<circle cx="8" cy="8" r="2.3"/><circle cx="16" cy="8" r="2.3"/><path d="M3 20c.4-2.8 2-4.8 5-4.8s4.6 2 5 4.8M11 20c.4-2.8 2-4.8 5-4.8s4.6 2 5 4.8"/>',
+};
+
 function renderModeChips() {
   const current = getContextMode();
   modeChipsEl.innerHTML = CONTEXT_MODES.map(m =>
-    `<button type="button" class="chip ${current === m.id ? 'selected' : ''}" data-mode="${m.id}">${escapeHTML(m.label)}</button>`
+    `<button type="button" class="chip ${current === m.id ? 'selected' : ''}" data-mode="${m.id}">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${MODE_ICON_PATHS[m.id] || ''}</svg>
+      ${escapeHTML(m.label)}
+    </button>`
   ).join('');
   modeHintEl.textContent = CONTEXT_MODE_BY_ID[current]?.hint || '';
   modeChipsEl.querySelectorAll('.chip').forEach(chip => {

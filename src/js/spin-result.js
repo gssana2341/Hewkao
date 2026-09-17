@@ -69,11 +69,13 @@ function cardHTML(r) {
   const credit = photoUri && r.photoAuthor
     ? `<div class="card-photo-credit">รูป: ${escapeHTML(r.photoAuthor)}</div>`
     : '';
-  return `${media}
-    <div class="card-body">
-      <div class="card-name">${escapeHTML(r.name)}</div>
-      <div class="card-meta">${cat.label} · ${formatDistance(r.distance)}${priceBit}</div>
-      ${credit}
+  return `<div class="spin-card-inner">
+      ${media}
+      <div class="card-body">
+        <div class="card-name">${escapeHTML(r.name)}</div>
+        <div class="card-meta">${cat.label} · ${formatDistance(r.distance)}${priceBit}</div>
+        ${credit}
+      </div>
     </div>`;
 }
 

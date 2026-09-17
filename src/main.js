@@ -8,6 +8,8 @@ import './js/analytics.js';
 import './js/subscription.js';
 import './js/auth.js';
 import './js/profile.js';
+import './js/feedback.js';
+import './js/admin-feedback.js';
 import './js/checkin.js';
 import './js/preferences.js';
 import './js/map.js';
@@ -133,8 +135,30 @@ splashRetryBtn.addEventListener('click', tryGetLocation);
 document.querySelectorAll('[data-start]').forEach(btn => {
   btn.addEventListener('click', () => {
     trackEvent('start_clicked');
+    // Already have a map/location fix from earlier — hop back into it
+    // instead of asking for location and reloading the map all over again.
+    if (entered) {
+      landing.hidden = true;
+      appEl.hidden = false;
+      return;
+    }
     tryGetLocation();
   });
+});
+
+// The logo used to be a plain `<a href="/">`, which just reloaded the whole
+// page — since location is cached, that silently re-entered the same map
+// view instead of taking anyone anywhere. Once the app has been entered,
+// clicking it shows the landing page in place instead.
+const brandChip = document.querySelector('.brand-chip');
+brandChip.addEventListener('click', (e) => {
+  if (!entered) return; // already on splash/landing, let the link behave normally
+  e.preventDefault();
+  trackEvent('logo_clicked');
+  appEl.hidden = true;
+  landingNotice.hidden = true;
+  landing.hidden = false;
+  landing.scrollTop = 0;
 });
 
 tryGetLocation();
