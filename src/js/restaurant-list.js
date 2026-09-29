@@ -20,11 +20,16 @@ export function setListLoading() {
   listEl.innerHTML = '<div class="list-loading">กำลังค้นหาร้านอาหารใกล้คุณ…</div>';
 }
 
-export function showListEmpty(msg, { retry = false } = {}) {
+// The fox sits in the empty and error states so a dead end feels friendly
+// rather than broken. `title` is optional: when given it leads, with `msg` as
+// the explanation under it.
+export function showListEmpty(msg, { retry = false, title = '' } = {}) {
   listCountEl.textContent = '0 ร้าน';
   listEl.innerHTML = `<div class="list-empty">
+      <img class="list-empty-fox" src="/assets/mascot/fox.png" alt="" width="112" height="128">
+      ${title ? `<p class="list-empty-title">${escapeHTML(title)}</p>` : ''}
       <p>${escapeHTML(msg)}</p>
-      ${retry ? '<button type="button" class="btn btn-secondary list-retry-btn">ลองอีกครั้ง</button>' : ''}
+      ${retry ? '<button type="button" class="btn btn-primary list-retry-btn">ลองอีกครั้ง</button>' : ''}
     </div>`;
   listEl.querySelector('.list-retry-btn')?.addEventListener('click', loadNearby);
 }
@@ -165,7 +170,7 @@ export function highlightCard(id) {
 export function renderList() {
   const visible = getVisibleRestaurants();
   if (!visible.length) {
-    showListEmpty('ไม่พบร้านที่ตรงกับตัวกรองที่ตั้งไว้ ลองแก้ไขในตั้งค่าการค้นหา');
+    showListEmpty('ลองปรับตัวกรองหรือโหมดด้านบน หรือเพิ่มระยะค้นหาในตั้งค่า', { title: 'ยังไม่มีร้านที่ตรงกับตัวกรอง' });
     return;
   }
   listCountEl.textContent = `${visible.length} ร้าน`;
@@ -195,13 +200,13 @@ export async function loadNearby() {
     state.restaurants = processResults(results, state.userLatLng);
   } catch (err) {
     console.warn('[HEWKAO] nearby search failed:', err);
-    showListEmpty('โหลดร้านอาหารไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง', { retry: true });
+    showListEmpty('ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้งนะ', { retry: true, title: 'โหลดร้านไม่สำเร็จ' });
     return;
   }
   renderList();
   renderMarkers();
   if (!state.restaurants.length) {
-    showListEmpty('ไม่พบร้านอาหารในระยะที่ตั้งไว้ ลองเพิ่มระยะค้นหาในการตั้งค่า');
+    showListEmpty('ลองเพิ่มระยะค้นหาในการตั้งค่า', { title: 'ไม่พบร้านอาหารในระยะนี้' });
   } else {
     spinBtn.disabled = false;
   }

@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { GO_METHODS, catOf } from './constants.js';
+import { GO_METHODS, SHOW_DELIVERY_OPTIONS, catOf } from './constants.js';
 import { escapeHTML, formatDistance, showToast, sleep } from './utils.js';
 import { getPhotoUri, getSettledPhotoUri } from './places-api.js';
 import { isolateMarker, restoreAllMarkers, flyTo } from './map.js';
@@ -29,10 +29,15 @@ const resultDistanceEl = document.getElementById('resultDistance');
 const resultTelEl = document.getElementById('resultTel');
 const resultMapsLinkEl = document.getElementById('resultMapsLink');
 const resultMethodsEl = document.getElementById('resultMethods');
+const resultClosedNoteEl = document.getElementById('resultClosedNote');
+const resultActionsEl = document.getElementById('resultActions');
 const respinBtn = document.getElementById('respinBtn');
 const goBtn = document.getElementById('goBtn');
 
 const RECENT_PICKS_TO_SKIP = 3;
+const WALK_M_PER_MIN = 80;
+const WALK_TIME_MAX_M = 1500;
+const PIN_TOP_CLEARANCE_PX = 110; // keeps the raised pin below the top bar
 
 // The random pool is exactly what the list and map show. It used to fall back
 // to every restaurant when the filters matched nothing, which could land on a
@@ -178,9 +183,17 @@ function updateGoBtn() {
   goBtn.textContent = state.selectedMethod === 'self' ? 'เริ่มเดินทาง' : `สั่งผ่าน ${GO_METHODS.find(m => m.id === state.selectedMethod).label}`;
 }
 
-// Delivery options show for every result: Google's `delivery` flag is an
+// Delivery options would show for every result: Google's `delivery` flag is an
 // Atmosphere-tier field, and asking for it would bill every search at that rate.
+// While SHOW_DELIVERY_OPTIONS is off there's only "ไปเอง" left, so the whole
+// row is hidden rather than showing one lonely chip.
 export function renderResultMethods(r) {
+  if (!SHOW_DELIVERY_OPTIONS) {
+    resultMethodsEl.hidden = true;
+    resultMethodsEl.innerHTML = '';
+    state.selectedMethod = 'self';
+    return;
+  }
   resultMethodsEl.hidden = false;
   resultMethodsEl.innerHTML = GO_METHODS.map(m =>
     `<button type="button" class="chip ${state.selectedMethod === m.id ? 'selected' : ''}" data-method="${m.id}"><img class="chip-icon" src="${m.icon}" alt="">${m.label}</button>`
@@ -242,7 +255,16 @@ export function showResult(r) {
   } else {
     resultAddressEl.hidden = true;
   }
-  resultDistanceEl.textContent = `ห่างออกไป ${formatDistance(r.distance)}`;
+  // A rough walking time (~80 m/min) turns "how far?" into "worth it?" — only
+  // shown while walking is a plausible way to get there.
+  const walkBit = r.distance <= WALK_TIME_MAX_M
+    ? ` · เดินประมาณ ${Math.max(1, Math.round(r.distance / WALK_M_PER_MIN))} นาที`
+    : '';
+  resultDistanceEl.textContent = `ห่างออกไป ${formatDistance(r.distance)}${walkBit}`;
+  // A closed shop gets a gentle notice and "สุ่มใหม่" as the lead action.
+  const closed = r.openNow === false;
+  resultClosedNoteEl.hidden = !closed;
+  resultActionsEl.classList.toggle('is-closed', closed);
   if (r.tel) {
     resultTelEl.textContent = `โทร ${r.tel}`;
     resultTelEl.href = `tel:${r.tel.replace(/[^0-9+]/g, '')}`;
@@ -267,6 +289,13 @@ export function showResult(r) {
   isolateMarker(r);
   highlightCard(r.id);
   flyTo([r.lat, r.lng], 16);
+  // flyTo centres the pin on the whole map, which is exactly where the sheet
+  // (up to ~65% of a phone screen) sits, so the pick was hidden behind it.
+  // Nudge the camera so the pin lands in the strip above the sheet, but never
+  // so far that it slides under the top bar.
+  const sheetH = resultSheet.getBoundingClientRect().height;
+  const nudge = Math.min(sheetH / 2, window.innerHeight / 2 - PIN_TOP_CLEARANCE_PX);
+  if (nudge > 0) state.map.panBy(0, Math.round(nudge));
 }
 
 // `offerCheckin` is set only when the user deliberately closes a result. That's

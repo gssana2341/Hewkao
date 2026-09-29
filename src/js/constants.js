@@ -9,16 +9,18 @@ const ICON_FASTFOOD = '<svg viewBox="0 0 24 24" width="18" height="18"><path d="
 const ICON_CAFE = '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 9h12v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z" fill="currentColor"/><path d="M17 10.5h1.4a2.5 2.5 0 0 1 0 5H17" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 3c-1.2 1-1.2 2 0 3M13 3c-1.2 1-1.2 2 0 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
 const ICON_OTHER = '<svg viewBox="0 0 24 24" width="18" height="18"><ellipse cx="7" cy="4.3" rx="2.3" ry="3.1" fill="currentColor"/><rect x="6.3" y="7" width="1.4" height="15" rx="0.7" fill="currentColor"/><rect x="15.3" y="9" width="1.4" height="13" rx="0.7" fill="currentColor"/><rect x="13.3" y="2" width="1.1" height="6" rx="0.5" fill="currentColor"/><rect x="15.45" y="2" width="1.1" height="6" rx="0.5" fill="currentColor"/><rect x="17.6" y="2" width="1.1" height="6" rx="0.5" fill="currentColor"/><path d="M13.3 8v1.5a3 3 0 0 0 3 3 3 3 0 0 0 3-3V8" fill="currentColor"/></svg>';
 
+// Pastel-leaning mid-tones (the "cat/*" variables in the Figma tokens board):
+// soft enough for the calm cream UI, still dark enough for the white pin icon.
 export const CATS = [
-  { id:'thai',     label:'อาหารไทย',      icon:ICON_THAI,     color:'#ff5a36' },
-  { id:'japanese', label:'ญี่ปุ่น',        icon:ICON_JAPANESE, color:'#e11d48' },
-  { id:'korean',   label:'เกาหลี',        icon:ICON_KOREAN,   color:'#db2777' },
-  { id:'chinese',  label:'จีน',           icon:ICON_CHINESE,  color:'#eab308' },
-  { id:'western',  label:'ตะวันตก',       icon:ICON_WESTERN,  color:'#8b5cf6' },
-  { id:'seafood',  label:'อาหารทะเล',     icon:ICON_SEAFOOD,  color:'#0284c7' },
-  { id:'fastfood', label:'ฟาสต์ฟู้ด',     icon:ICON_FASTFOOD, color:'#f59e0b' },
-  { id:'cafe',     label:'คาเฟ่/ของหวาน', icon:ICON_CAFE,     color:'#92400e' },
-  { id:'other',    label:'อาหารทั่วไป',   icon:ICON_OTHER,    color:'#a16207' },
+  { id:'thai',     label:'อาหารไทย',      icon:ICON_THAI,     color:'#ff7f5c' },
+  { id:'japanese', label:'ญี่ปุ่น',        icon:ICON_JAPANESE, color:'#f26d8b' },
+  { id:'korean',   label:'เกาหลี',        icon:ICON_KOREAN,   color:'#d97bb6' },
+  { id:'chinese',  label:'จีน',           icon:ICON_CHINESE,  color:'#eda92f' },
+  { id:'western',  label:'ตะวันตก',       icon:ICON_WESTERN,  color:'#9b8af0' },
+  { id:'seafood',  label:'อาหารทะเล',     icon:ICON_SEAFOOD,  color:'#4ba3e0' },
+  { id:'fastfood', label:'ฟาสต์ฟู้ด',     icon:ICON_FASTFOOD, color:'#f5a04a' },
+  { id:'cafe',     label:'คาเฟ่/ของหวาน', icon:ICON_CAFE,     color:'#b8825a' },
+  { id:'other',    label:'อาหารทั่วไป',   icon:ICON_OTHER,    color:'#a9967f' },
 ];
 export const CAT_BY_ID = Object.fromEntries(CATS.map(c => [c.id, c]));
 export function catOf(r) { return CAT_BY_ID[r.category] || CAT_BY_ID.other; }
@@ -74,10 +76,17 @@ export const SHOW_LIST_PHOTOS = true;
 // the public build hides them unless VITE_DEMO_MODE=true is set explicitly.
 export const DEMO_MODE = import.meta.env.DEV || import.meta.env.VITE_DEMO_MODE === 'true';
 
-// Prototype only: "ไปเอง" opens Google Maps directions for every result. The
-// delivery options open a search deep-link rather than a real merchant-matched
-// page — LINE MAN and ShopeeFood don't expose a Place ID → merchant ID mapping,
-// so an exact deep link needs real API research before this ships for real.
+// Delivery options (LINE MAN / ShopeeFood) are switched off. From a web page
+// there is no way to land inside either app on the picked shop: neither exposes
+// a Place ID → merchant ID mapping, and the app URL schemes / universal links
+// aren't documented for third parties — all the web can do is open a Google
+// search for the shop's name, which the "สั่งผ่าน …" label wrongly promised as
+// ordering. Flip this back on only once there's a real, merchant-matched link
+// (or a partner API); the chips, the button label and deliverySearchUrl() in
+// spin-result.js are kept intact for that day.
+export const SHOW_DELIVERY_OPTIONS = false;
+
+// "ไปเอง" opens the route preview / Google Maps directions for every result.
 export const GO_METHODS = [
   { id: 'self',        label: 'ไปเอง',       icon: 'assets/icon-self.jpg' },
   { id: 'lineman',     label: 'LINE MAN',    icon: 'assets/icon-lineman.png' },

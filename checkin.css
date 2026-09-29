@@ -1,22 +1,23 @@
 /* ---------- Daily check-in modal ---------- */
 .checkin-modal{ max-width:420px; }
+/* All seven days fit in one row: the pips shrink to share the width instead of
+   holding a 56px minimum, which forced a horizontal scrollbar and hid days 6–7
+   on a 375px phone. */
 .checkin-strip{
-  display:flex; gap:var(--sp-2);
+  display:flex; gap:var(--sp-1);
   margin:var(--sp-5) 0;
-  overflow-x:auto;
-  padding-bottom:var(--sp-1);
 }
 .checkin-pip{
-  flex:1 0 auto;
-  min-width:56px;
+  flex:1 1 0;
+  min-width:0;
   display:flex; flex-direction:column; align-items:center; gap:var(--sp-1);
-  padding:var(--sp-3) var(--sp-2);
+  padding:var(--sp-3) 2px;
   border:1.5px solid var(--color-border);
-  border-radius:var(--radius-md);
+  border-radius:var(--radius-sm);
   color:var(--color-text-muted);
 }
-.checkin-pip-day{ font-size:.72rem; font-weight:700; }
-.checkin-pip-reward{ font-size:.85rem; font-weight:800; }
+.checkin-pip-day{ font-size:.66rem; font-weight:700; white-space:nowrap; }
+.checkin-pip-reward{ font-size:.8rem; font-weight:800; white-space:nowrap; }
 .checkin-pip.done{ border-color:var(--color-border); background:var(--color-accent-softer); color:var(--color-text-muted); }
 .checkin-pip.done .checkin-pip-reward::after{ content:" \2713"; }
 .checkin-pip.today{

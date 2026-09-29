@@ -30,4 +30,7 @@
   padding:var(--sp-1) 0;
 }
 .profile-card .btn{ margin-top:var(--sp-3); }
-.profile-checkin-strip{ margin:0 0 var(--sp-3); }
+/* Bleeds 6px into the card's padding so all seven "Day n" labels fit on one row
+   at 360px without touching. */
+.profile-checkin-strip{ margin:0 -6px var(--sp-3); }
+.profile-checkin-strip .checkin-pip-day{ letter-spacing:-.02em; }

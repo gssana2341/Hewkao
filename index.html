@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>วันนี้กินอะไรดี? สุ่มร้านอาหารใกล้คุณ | HEWKAO หิวข้าว</title>
-<meta name="description" content="คิดไม่ออกว่าจะกินอะไร? HEWKAO สุ่มร้านอาหารใกล้คุณให้ในไม่กี่วินาที กรองร้านที่เปิดอยู่ ตัดประเภทที่ไม่ชอบ แล้วนำทางด้วย Google Maps หรือสั่งเดลิเวอรี่ต่อได้ทันที ใช้ฟรี">
+<meta name="description" content="คิดไม่ออกว่าจะกินอะไร? HEWKAO สุ่มร้านอาหารใกล้คุณให้ในไม่กี่วินาที กรองร้านที่เปิดอยู่ ตัดประเภทที่ไม่ชอบ แล้วนำทางไปร้านด้วย Google Maps ได้ทันที ใช้ฟรี">
 <meta name="theme-color" content="#ffffff">
 <script type="application/ld+json">
 {
@@ -25,7 +25,7 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=Mitr:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="subscription.css">
 <link rel="stylesheet" href="profile.css">
@@ -51,7 +51,7 @@
       <p id="landingNotice" class="landing-notice" role="status" hidden></p>
       <p class="landing-eyebrow">หิวข้าว แต่คิดไม่ออก?</p>
       <h1>วันนี้กินอะไรดี?<br><span>ให้ HEWKAO สุ่มให้</span></h1>
-      <p class="landing-lede">กดปุ่มเดียว HEWKAO สุ่มร้านอาหารที่อยู่ใกล้คุณจริงๆ พร้อมเรตติ้ง ระยะทาง และบอกว่าร้านเปิดอยู่ไหม แล้วกดนำทางด้วย Google Maps หรือสั่งผ่าน LINE MAN / ShopeeFood ต่อได้เลย</p>
+      <p class="landing-lede">กดปุ่มเดียว HEWKAO สุ่มร้านอาหารที่อยู่ใกล้คุณจริงๆ พร้อมเรตติ้ง ระยะทาง และบอกว่าร้านเปิดอยู่ไหม แล้วกดนำทางไปร้านด้วย Google Maps ต่อได้เลย</p>
       <div class="landing-cta">
         <button type="button" class="btn btn-primary landing-start-btn" data-start>
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -83,7 +83,7 @@
     <ol class="landing-steps">
       <li><b>อนุญาตตำแหน่ง</b><span>HEWKAO ใช้ตำแหน่งตอนนั้นเพื่อหาร้านรอบตัว ไม่เก็บไว้บนเซิร์ฟเวอร์</span></li>
       <li><b>กดสุ่ม</b><span>วงล้อหมุนเลือกให้ 1 ร้าน ไม่ถูกใจก็กดสุ่มใหม่ ไม่ได้ร้านเดิมซ้ำ</span></li>
-      <li><b>ไปกินเลย</b><span>กดนำทางด้วย Google Maps หรือสั่งเดลิเวอรี่ต่อได้ทันที</span></li>
+      <li><b>ไปกินเลย</b><span>กดดูเส้นทางและนำทางด้วย Google Maps ได้ทันที</span></li>
     </ol>
   </section>
 
@@ -158,9 +158,11 @@
     <div class="list-handle" id="listHandle" role="button" tabindex="0" aria-label="ลากเพื่อดูรายชื่อร้าน"><span></span></div>
     <div class="list-header">
       <div id="modeChips" class="chips"></div>
-      <span id="listCount" class="list-count">กำลังค้นหา…</span>
     </div>
-    <p id="modeHint" class="mode-hint"></p>
+    <div class="list-subrow">
+      <span id="listCount" class="list-count">กำลังค้นหา…</span>
+      <p id="modeHint" class="mode-hint"></p>
+    </div>
     <div id="restaurantList" class="restaurant-list"></div>
   </div>
 
@@ -287,9 +289,10 @@
         </svg>
       </a>
       <div id="resultMethods" class="chips result-methods" hidden></div>
+      <p id="resultClosedNote" class="result-closed-note" hidden>ตอนนี้ร้านปิดอยู่ กด "สุ่มใหม่" เพื่อหาร้านอื่นได้เลย</p>
     </div>
   </div>
-  <div class="result-actions">
+  <div class="result-actions" id="resultActions">
     <button id="respinBtn" type="button" class="btn btn-secondary">สุ่มใหม่</button>
     <button id="goBtn" type="button" class="btn btn-primary">เริ่มเดินทาง</button>
   </div>
