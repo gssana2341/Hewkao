@@ -1,7 +1,7 @@
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from './firebase.js';
-import { openLoginModal } from './auth.js';
+import { login } from './auth.js';
 import { escapeHTML, showToast } from './utils.js';
 
 /* =========================================================================
@@ -68,8 +68,8 @@ if (isRequested() && auth) {
     if (user?.email === OWNER_EMAIL) {
       loadAndShow();
     } else {
-      showToast('หน้านี้ต้องเข้าสู่ระบบด้วยอีเมลของเจ้าของแอปก่อน');
-      openLoginModal();
+      showToast('หน้านี้ต้องเข้าสู่ระบบด้วยบัญชี Google ของเจ้าของแอปก่อน');
+      login();
     }
   });
 }

@@ -5,7 +5,7 @@ import { db } from './firebase.js';
    HEWKAO — Firestore-backed user document (users/{uid}).
 
    Replaces the old per-file localStorage keys (spin credits, check-in
-   streak, phone) with one doc per user, kept in this in-memory `cache` and
+   streak) with one doc per user, kept in this in-memory `cache` and
    synced live via onSnapshot. Callers (subscription.js, checkin.js, auth.js)
    read `getCache()` synchronously — same calling convention the old
    localStorage.getItem() reads had — and write through patch(), which
@@ -14,7 +14,6 @@ import { db } from './firebase.js';
    ========================================================================= */
 
 const DEFAULTS = {
-  phone: '',
   freeSpinDate: '',
   freeSpinUsed: 0,
   spinCredits: 0,
@@ -44,7 +43,7 @@ export function subscribe(fn) {
 }
 
 // Re-pointed at a new uid on every auth state change (anonymous sign-in,
-// phone login, logout-then-anonymous). Each call tears down the previous
+// Google login, logout-then-anonymous). Each call tears down the previous
 // doc's listener so it doesn't keep writing into a stale user's data.
 export function attachUser(nextUid) {
   if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }

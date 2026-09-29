@@ -1,6 +1,6 @@
 import { escapeHTML, showToast } from './utils.js';
 import { DEMO_MODE } from './constants.js';
-import { isLoggedIn as authIsLoggedIn, getEmail, getPhone, openLoginModal, logout } from './auth.js';
+import { isLoggedIn as authIsLoggedIn, getEmail, login, logout } from './auth.js';
 import { openPaywall, getSpinBreakdown } from './subscription.js';
 import { renderStripHTML, hasClaimedToday, getStreak, claim as claimCheckin } from './checkin.js';
 import { subscribe } from './user-data.js';
@@ -41,7 +41,7 @@ function buildModal() {
   wrap.querySelector('#profileContent').addEventListener('click', e => {
     if (e.target.closest('#profileLoginBtn')) {
       close();
-      openLoginModal();
+      login();
     } else if (e.target.closest('#profileLogoutBtn')) {
       logout();
       showToast('ออกจากระบบแล้ว');
@@ -59,14 +59,13 @@ function buildModal() {
 }
 
 function loginSectionHTML() {
-  // Login is a free email link + a (unverified, dedup-only) phone number —
-  // see auth.js. No billing dependency, so it's live for everyone.
+  // Login is Google Sign-In — see auth.js. No billing dependency, so it's
+  // live for everyone.
   const body = authIsLoggedIn()
     ? `<p class="profile-phone">${escapeHTML(getEmail())}</p>
-       <p class="profile-phone">${escapeHTML(getPhone())}</p>
        <button id="profileLogoutBtn" type="button" class="btn btn-secondary btn-block">ออกจากระบบ</button>`
     : `<p class="profile-login-status">ยังไม่ได้เข้าสู่ระบบ</p>
-       <button id="profileLoginBtn" type="button" class="btn btn-primary btn-block">เข้าสู่ระบบด้วยอีเมล</button>`;
+       <button id="profileLoginBtn" type="button" class="btn btn-primary btn-block">เข้าสู่ระบบด้วย Google</button>`;
   return `<div class="profile-section">${body}</div>`;
 }
 
